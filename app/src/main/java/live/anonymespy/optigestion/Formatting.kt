@@ -40,6 +40,12 @@ fun formatPercent(value: Double): String {
     return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
 }
 
+/** "3.5" months, "2" months — one decimal, trimmed. Used by the runway KPI. */
+fun formatMonths(value: Double): String {
+    val rounded = (value * 10).roundToInt() / 10.0
+    return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
+}
+
 /** "Today, 09:41 AM" / "Yesterday" / "12 Jun 2026" style label from a timestamp. */
 fun formatDateLabel(timestampMillis: Long): String {
     val now = Calendar.getInstance()
@@ -66,4 +72,28 @@ fun currentPeriodLabel(): String {
     val cal = Calendar.getInstance()
     val quarter = (cal.get(Calendar.MONTH) / 3) + 1
     return "T$quarter ${cal.get(Calendar.YEAR)}"
+}
+
+/** Start-of-period timestamp for a [PeriodFilter], or null for [PeriodFilter.ALL] (no lower bound). */
+fun periodFilterStartMillis(filter: PeriodFilter): Long? {
+    if (filter == PeriodFilter.ALL) return null
+    val cal = Calendar.getInstance()
+    when (filter) {
+        PeriodFilter.MONTH -> cal.set(Calendar.DAY_OF_MONTH, 1)
+        PeriodFilter.QUARTER -> {
+            val quarterStartMonth = (cal.get(Calendar.MONTH) / 3) * 3
+            cal.set(Calendar.MONTH, quarterStartMonth)
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+        }
+        PeriodFilter.YEAR -> {
+            cal.set(Calendar.MONTH, 0)
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+        }
+        PeriodFilter.ALL -> {}
+    }
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
 }

@@ -40,10 +40,16 @@ fun SheetsScreen() {
     var showFilterMenu by remember { mutableStateOf(false) }
     var editingEntry by remember { mutableStateOf<SheetEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    val visibleEntries = remember(entries.toList(), statusFilter, sortDescending) {
+    val visibleEntries = remember(entries.toList(), statusFilter, sortDescending, searchQuery) {
         entries
             .filter { statusFilter == null || it.status == statusFilter }
+            .filter {
+                searchQuery.isBlank() ||
+                    it.category.contains(searchQuery, ignoreCase = true) ||
+                    it.costCenterCode.contains(searchQuery, ignoreCase = true)
+            }
             .sortedWith(compareBy<SheetEntry> { it.amount }.let { if (sortDescending) it.reversed() else it })
     }
 
@@ -53,6 +59,12 @@ fun SheetsScreen() {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+            SearchField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
             ControlsBar(
                 periodLabel = AppRepository.periodLabel,
                 activeFilter = statusFilter,
@@ -155,6 +167,32 @@ private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
             }
         }
     }
+}
+
+/* ---------------- Search ---------------- */
+
+@Composable
+private fun SearchField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        singleLine = true,
+        placeholder = { Text("Rechercher une catégorie ou un centre de coût…") },
+        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null, tint = CaeColors.OnSurfaceVariant) },
+        trailingIcon = {
+            if (value.isNotEmpty()) {
+                IconButton(onClick = { onValueChange("") }) {
+                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Effacer", tint = CaeColors.OnSurfaceVariant)
+                }
+            }
+        },
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = CaeColors.Primary,
+            unfocusedBorderColor = CaeColors.OutlineVariant
+        )
+    )
 }
 
 /* ---------------- Controls bar ---------------- */
@@ -354,13 +392,46 @@ private fun EntryFormDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = costCenterCode,
-                    onValueChange = { costCenterCode = it.uppercase() },
-                    label = { Text("Centre de coût (ex: IT-01)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                val availableCostCenters = AppRepository.costCenters
+                if (availableCostCenters.isNotEmpty()) {
+                    var ccMenuExpanded by remember { mutableStateOf(false) }
+                    Box {
+                        OutlinedTextField(
+                            value = availableCostCenters.find { it.code == costCenterCode }
+                                ?.let { "${it.code} — ${it.name}" } ?: costCenterCode,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Centre de coût") },
+                            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { ccMenuExpanded = true }
+                        )
+                        DropdownMenu(expanded = ccMenuExpanded, onDismissRequest = { ccMenuExpanded = false }) {
+                            availableCostCenters.forEach { cc ->
+                                DropdownMenuItem(
+                                    text = { Text("${cc.code} — ${cc.name}") },
+                                    onClick = { costCenterCode = cc.code; ccMenuExpanded = false }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = costCenterCode,
+                        onValueChange = { costCenterCode = it.uppercase() },
+                        label = { Text("Centre de coût (ex: IT-01)") },
+                        supportingText = { Text("Astuce : créez des centres de coût dans l'onglet Centres pour choisir dans une liste.") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("Type :", fontSize = 14.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(1f))

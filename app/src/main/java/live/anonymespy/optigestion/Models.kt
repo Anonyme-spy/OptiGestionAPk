@@ -10,12 +10,13 @@ import java.util.UUID
  *  NAVIGATION
  * ============================================================ */
 
-/** The four bottom-nav / side-nav destinations shared by every screen. */
+/** The five bottom-nav / side-nav destinations shared by every screen. */
 enum class NavDestination(val route: String, val label: String) {
     DASHBOARD("dashboard", "Dashboard"),
     SHEETS("sheets", "Sheets"),
-    ANALYSIS("analysis", "Analysis"),   // -> Budget vs Réalisé screen
-    STATS("stats", "Stats")             // -> Analytics & Stats screen
+    ANALYSIS("analysis", "Budget"),       // -> Budget vs Réalisé screen
+    COST_CENTERS("cost_centers", "Centres"), // -> Cost Centers screen
+    STATS("stats", "Rapports")            // -> Analytics & Reports screen
 }
 
 /* ============================================================
@@ -66,7 +67,8 @@ enum class EntryStatus(val label: String) {
  * A single ledger line. [amount] is always positive; [isCredit] says
  * whether it's incoming (revenue) or outgoing (a cost). [timestampMillis]
  * lets the Stats screen build a real month-by-month trend instead of a
- * static mock.
+ * static mock. [costCenterCode] should match a [CostCenter.code] when one
+ * exists, which is what links a transaction to real budget tracking.
  */
 data class SheetEntry(
     val id: String = UUID.randomUUID().toString(),
@@ -113,9 +115,57 @@ data class TrendVariancePoint(
     val heightFraction: Float
 )
 
+/** Raised on the Dashboard / Reports whenever a budget category is at or past a spend threshold. */
+data class BudgetAlert(
+    val label: String,
+    val percentUsed: Int,
+    val isOverBudget: Boolean
+)
+
 /* ============================================================
- *  ANALYTICS & STATS SCREEN (all DERIVED from budget categories
- *  and sheet entries — see AppRepository)
+ *  COST CENTERS SCREEN — real, editable departments/cost centers.
+ *  Spend for each is DERIVED from Sheets entries whose costCenterCode
+ *  matches (see AppRepository.departmentBudgets()).
+ * ============================================================ */
+
+enum class DepartmentIcon { PRODUCTION, RESEARCH, ADMIN, SALES }
+
+data class CostCenter(
+    val id: String = UUID.randomUUID().toString(),
+    val code: String,
+    val name: String,
+    val icon: DepartmentIcon,
+    /** 0 for pure revenue centers (e.g. Sales) where "over budget" doesn't apply. */
+    val monthlyBudget: Double
+)
+
+enum class CostCenterFootnoteIcon { NONE, TRENDING_DOWN, WARNING }
+
+data class CostCenterSummary(
+    val label: String,
+    val value: String,
+    val valueColor: Color,
+    val footnote: String,
+    val footnoteColor: Color,
+    val footnoteIcon: CostCenterFootnoteIcon = CostCenterFootnoteIcon.NONE
+)
+
+/** One department/cost-center row on the Cost Centers screen — budget vs actual spend. */
+data class DepartmentBudget(
+    val costCenterId: String,
+    val name: String,
+    val costCenterCode: String,
+    val icon: DepartmentIcon,
+    val budgetAmount: Double,
+    val spendAmount: Double,
+    val amountLabel: String,
+    val percentOfBudget: Int,
+    val isOverBudget: Boolean
+)
+
+/* ============================================================
+ *  ANALYTICS & STATS / REPORTS SCREEN (all DERIVED from budget
+ *  categories, cost centers and sheet entries — see AppRepository)
  * ============================================================ */
 
 data class CostDistributionSlice(
@@ -129,6 +179,21 @@ data class TrendPoint(
     val monthLabel: String,
     val value: Float   // 0f (bottom) .. 100f (top)
 )
+
+/** One month of income vs expense, for the cash-flow bar chart on Reports. */
+data class CashFlowPoint(
+    val monthLabel: String,
+    val income: Double,
+    val expense: Double
+)
+
+/** Reporting period presets on the Reports screen. */
+enum class PeriodFilter(val label: String) {
+    ALL("Tout"),
+    MONTH("Ce mois"),
+    QUARTER("Ce trimestre"),
+    YEAR("Cette année")
+}
 
 /** Palette cycled through when there are more budget categories than base colors. */
 val DistributionPalette: List<Color> = listOf(

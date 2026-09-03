@@ -43,9 +43,10 @@ fun OptiGestionRoot(isWideScreen: Boolean = false) {
 }
 
 /**
- * Root composable that ties together all four CAE Analytics screens
- * (Dashboard, Sheets, Analysis -> Budget vs Actual, Stats -> Analytics)
- * with a shared top bar, bottom nav (mobile) and side rail (wide screens).
+ * Root composable that ties together all five CAE Analytics screens
+ * (Dashboard, Sheets, Analysis -> Budget vs Actual, Cost Centers, Stats ->
+ * Reports) with a shared top bar, bottom nav (mobile) and side rail (wide
+ * screens).
  *
  * Requires the Navigation Compose dependency:
  *   implementation("androidx.navigation:navigation-compose:2.8.0")
@@ -72,7 +73,7 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
         AlertDialog(
             onDismissRequest = { showResetConfirm = false },
             title = { Text("Réinitialiser les données ?") },
-            text = { Text("Toutes vos écritures et budgets seront supprimés. Vous pourrez recharger le modèle d'exemple ou repartir de zéro.") },
+            text = { Text("Toutes vos écritures, budgets et centres de coût seront supprimés. Vous pourrez recharger le modèle d'exemple ou repartir de zéro.") },
             confirmButton = {
                 TextButton(onClick = {
                     showResetConfirm = false
@@ -119,9 +120,10 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
                     startDestination = NavDestination.DASHBOARD.route,
                     modifier = Modifier.weight(1f)
                 ) {
-                    composable(NavDestination.DASHBOARD.route) { DashboardScreen() }
+                    composable(NavDestination.DASHBOARD.route) { DashboardScreen(onNavigate = ::navigateTo) }
                     composable(NavDestination.SHEETS.route) { SheetsScreen() }
                     composable(NavDestination.ANALYSIS.route) { BudgetVsActualScreen() }
+                    composable(NavDestination.COST_CENTERS.route) { CostCentersScreen() }
                     composable(NavDestination.STATS.route) { StatsScreen() }
                 }
             }
@@ -134,7 +136,8 @@ private fun NavDestination.screenTitle(): String = when (this) {
     NavDestination.DASHBOARD -> "CAE Analytics"
     NavDestination.SHEETS -> "Sheets"
     NavDestination.ANALYSIS -> "Budget vs Actual"
-    NavDestination.STATS -> "Analytics"
+    NavDestination.COST_CENTERS -> "Centres de Coût"
+    NavDestination.STATS -> "Rapports"
 }
 
 /* ============================================================
@@ -216,6 +219,7 @@ private fun NavDestination.icon(): ImageVector = when (this) {
     NavDestination.DASHBOARD -> Icons.Filled.Dashboard
     NavDestination.SHEETS -> Icons.Filled.TableChart
     NavDestination.ANALYSIS -> Icons.Filled.Analytics
+    NavDestination.COST_CENTERS -> Icons.Filled.AccountTree
     NavDestination.STATS -> Icons.Filled.QueryStats
 }
 

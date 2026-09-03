@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import live.anonymespy.optigestion.ui.theme.CaeColors
 import live.anonymespy.optigestion.ui.theme.ThemeMode
 import org.json.JSONArray
 import org.json.JSONObject
@@ -15,7 +16,8 @@ import org.json.JSONObject
  * Single, app-wide source of truth. Every screen reads from and writes to
  * this object, so a value changed on one screen (e.g. adding a Sheets
  * entry) is instantly reflected everywhere it's used (Dashboard KPIs,
- * Stats charts, etc). State also survives process death via SharedPreferences.
+ * Stats charts, Cost Centers, etc). State also survives process death via
+ * SharedPreferences.
  */
 object AppRepository {
 
@@ -24,8 +26,10 @@ object AppRepository {
     private const val KEY_PERIOD = "period_label"
     private const val KEY_ENTRIES = "entries_json"
     private const val KEY_CATEGORIES = "categories_json"
+    private const val KEY_COST_CENTERS = "cost_centers_json"
     private const val KEY_CURRENCY = "currency"
     private const val KEY_THEME_MODE = "theme_mode"
+    private const val KEY_CASH_ON_HAND = "cash_on_hand"
 
     private lateinit var prefs: SharedPreferences
 
@@ -41,11 +45,18 @@ object AppRepository {
     /** App-wide light/dark/AMOLED preference, changeable any time from the Settings screen. */
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
 
+    /** Cash currently available, used to compute the runway KPI on Dashboard/Reports. */
+    var cashOnHand by mutableStateOf(0.0)
+        private set
+
     /** The transactional ledger shown on the Sheets screen. Empty by default. */
     val entries: SnapshotStateList<SheetEntry> = mutableStateListOf()
 
     /** Category-level budgets shown on the Budget vs Actual screen. Empty by default. */
     val budgetCategories: SnapshotStateList<BudgetCategoryUi> = mutableStateListOf()
+
+    /** Real, editable departments/cost centers shown on the Cost Centers screen. */
+    val costCenters: SnapshotStateList<CostCenter> = mutableStateListOf()
 
     /** Planned total is simply the sum of every category's planned budget — one source of truth. */
     val plannedBudgetTotal: Double get() = budgetCategories.sumOf { it.budgetAmount }
@@ -59,6 +70,7 @@ object AppRepository {
         prefs.getString(KEY_THEME_MODE, null)?.let { saved ->
             themeMode = runCatching { ThemeMode.valueOf(saved) }.getOrDefault(ThemeMode.SYSTEM)
         }
+        cashOnHand = prefs.getFloat(KEY_CASH_ON_HAND, 0f).toDouble()
         hasChosenSetup = prefs.getBoolean(KEY_INITIALIZED, false)
         if (hasChosenSetup) restoreFromPrefs()
     }
@@ -75,6 +87,12 @@ object AppRepository {
         if (::prefs.isInitialized) prefs.edit().putString(KEY_THEME_MODE, newMode.name).apply()
     }
 
+    /** Cash on hand feeds the runway KPI. Kept even across a full data reset. */
+    fun selectCashOnHand(amount: Double) {
+        cashOnHand = amount
+        if (::prefs.isInitialized) prefs.edit().putFloat(KEY_CASH_ON_HAND, amount.toFloat()).apply()
+    }
+
     /* ---------------- Onboarding ---------------- */
 
     fun loadTemplate() {
@@ -82,30 +100,34 @@ object AppRepository {
         entries.addAll(TemplateData.sheetEntries())
         budgetCategories.clear()
         budgetCategories.addAll(TemplateData.budgetCategories())
+        costCenters.clear()
+        costCenters.addAll(TemplateData.costCenters())
         periodLabel = TemplateData.periodLabel
         hasChosenSetup = true
         persist()
     }
 
-
     fun startEmpty() {
         entries.clear()
         budgetCategories.clear()
+        costCenters.clear()
         periodLabel = currentPeriodLabel()
         hasChosenSetup = true
         persist()
     }
 
-    /** Wipes all data and sends the user back to the template-choice screen. Currency is kept. */
+    /** Wipes all data and sends the user back to the template-choice screen. Currency/cash are kept. */
     fun resetToOnboarding() {
         entries.clear()
         budgetCategories.clear()
+        costCenters.clear()
         hasChosenSetup = false
         prefs.edit()
             .remove(KEY_INITIALIZED)
             .remove(KEY_PERIOD)
             .remove(KEY_ENTRIES)
             .remove(KEY_CATEGORIES)
+            .remove(KEY_COST_CENTERS)
             .apply()
     }
 
@@ -139,6 +161,84 @@ object AppRepository {
         persist()
     }
 
+    /** Budget categories whose actual spend has hit [thresholdPercent] of their planned budget. */
+    fun budgetAlerts(thresholdPercent: Double = 90.0): List<BudgetAlert> =
+        budgetCategories.mapNotNull { c ->
+            if (c.budgetAmount <= 0.0) return@mapNotNull null
+            val percent = (c.actualAmount / c.budgetAmount) * 100
+            if (percent >= thresholdPercent) BudgetAlert(c.name, percent.toInt(), c.actualAmount > c.budgetAmount) else null
+        }.sortedByDescending { it.percentUsed }
+
+    /* ---------------- Cost centers ---------------- */
+
+    fun addCostCenter(code: String, name: String, icon: DepartmentIcon, monthlyBudget: Double) {
+        costCenters.add(CostCenter(code = code, name = name, icon = icon, monthlyBudget = monthlyBudget))
+        persist()
+    }
+
+    fun updateCostCenter(updated: CostCenter) {
+        val idx = costCenters.indexOfFirst { it.id == updated.id }
+        if (idx != -1) costCenters[idx] = updated
+        persist()
+    }
+
+    fun deleteCostCenter(id: String) {
+        costCenters.removeAll { it.id == id }
+        persist()
+    }
+
+    /** Total spend (debits only) posted against a given cost-center code. */
+    fun costCenterSpend(code: String): Double =
+        entries.filter { !it.isCredit && it.costCenterCode == code }.sumOf { it.amount }
+
+    /** Every cost center with its live spend, sorted by how close to (or past) budget it is. */
+    fun departmentBudgets(): List<DepartmentBudget> =
+        costCenters.map { cc ->
+            val spend = costCenterSpend(cc.code)
+            val percent = if (cc.monthlyBudget > 0) ((spend / cc.monthlyBudget) * 100).toInt() else 0
+            DepartmentBudget(
+                costCenterId = cc.id,
+                name = cc.name,
+                costCenterCode = cc.code,
+                icon = cc.icon,
+                budgetAmount = cc.monthlyBudget,
+                spendAmount = spend,
+                amountLabel = formatCurrencyCompact(spend),
+                percentOfBudget = percent,
+                isOverBudget = cc.monthlyBudget > 0 && spend > cc.monthlyBudget
+            )
+        }.sortedByDescending { it.percentOfBudget }
+
+    fun costCenterSummaries(): List<CostCenterSummary> {
+        val totalBudget = costCenters.sumOf { it.monthlyBudget }
+        val totalSpend = costCenters.sumOf { costCenterSpend(it.code) }
+        val overCount = departmentBudgets().count { it.isOverBudget }
+        return listOf(
+            CostCenterSummary(
+                label = "BUDGET TOTAL",
+                value = formatCurrencyCompact(totalBudget),
+                valueColor = CaeColors.Primary,
+                footnote = "${costCenters.size} centre(s) de coût",
+                footnoteColor = CaeColors.OnSurfaceVariant
+            ),
+            CostCenterSummary(
+                label = "DÉPENSÉ",
+                value = formatCurrencyCompact(totalSpend),
+                valueColor = CaeColors.Primary,
+                footnote = if (totalBudget > 0) "${formatPercent((totalSpend / totalBudget) * 100)}% du budget" else "Aucun budget défini",
+                footnoteColor = CaeColors.OnSurfaceVariant
+            ),
+            CostCenterSummary(
+                label = "EN DÉPASSEMENT",
+                value = overCount.toString(),
+                valueColor = if (overCount > 0) CaeColors.Error else CaeColors.Primary,
+                footnote = if (overCount > 0) "Nécessite votre attention" else "Tout est sous contrôle",
+                footnoteColor = if (overCount > 0) CaeColors.Error else CaeColors.OnTertiaryContainer,
+                footnoteIcon = if (overCount > 0) CostCenterFootnoteIcon.WARNING else CostCenterFootnoteIcon.TRENDING_DOWN
+            )
+        )
+    }
+
     /** Call after mutating a BudgetCategoryUi's actualInput/budgetAmount so it survives restart. */
     fun persist() {
         if (!::prefs.isInitialized) return
@@ -167,11 +267,23 @@ object AppRepository {
                 })
             }
         }
+        val costCentersJson = JSONArray().apply {
+            costCenters.forEach { cc ->
+                put(JSONObject().apply {
+                    put("id", cc.id)
+                    put("code", cc.code)
+                    put("name", cc.name)
+                    put("icon", cc.icon.name)
+                    put("monthlyBudget", cc.monthlyBudget)
+                })
+            }
+        }
         prefs.edit()
             .putBoolean(KEY_INITIALIZED, hasChosenSetup)
             .putString(KEY_PERIOD, periodLabel)
             .putString(KEY_ENTRIES, entriesJson.toString())
             .putString(KEY_CATEGORIES, categoriesJson.toString())
+            .putString(KEY_COST_CENTERS, costCentersJson.toString())
             .apply()
     }
 
@@ -213,6 +325,23 @@ object AppRepository {
                 budgetCategories.add(ui)
             }
         }
+
+        costCenters.clear()
+        prefs.getString(KEY_COST_CENTERS, null)?.let { raw ->
+            val arr = JSONArray(raw)
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                costCenters.add(
+                    CostCenter(
+                        id = o.getString("id"),
+                        code = o.getString("code"),
+                        name = o.getString("name"),
+                        icon = DepartmentIcon.valueOf(o.getString("icon")),
+                        monthlyBudget = o.getDouble("monthlyBudget")
+                    )
+                )
+            }
+        }
     }
 
     /* ---------------- Derived analytics (Dashboard + Stats read these) ---------------- */
@@ -224,6 +353,49 @@ object AppRepository {
     }
 
     fun totalCosts(): Double = entries.filter { !it.isCredit }.sumOf { it.amount }
+
+    fun totalRevenue(): Double = entries.filter { it.isCredit }.sumOf { it.amount }
+
+    /** Net margin as a percentage of revenue, or null when there's no revenue to divide by. */
+    fun marginPercent(): Double? {
+        val revenue = totalRevenue()
+        if (revenue == 0.0) return null
+        return (netMargin() / revenue) * 100
+    }
+
+    /** Average monthly cash outflow over the most recent (up to 3) months with expense data. */
+    fun burnRate(): Double {
+        val byMonth = entries.filter { !it.isCredit }
+            .groupBy { monthKeyAndLabel(it.timestampMillis).first }
+            .mapValues { (_, list) -> list.sumOf { it.amount } }
+            .toList()
+            .sortedByDescending { it.first }
+            .take(3)
+        if (byMonth.isEmpty()) return 0.0
+        return byMonth.sumOf { it.second } / byMonth.size
+    }
+
+    /** Months of runway left at the current burn rate. Null means burn rate is 0 (infinite runway). */
+    fun runwayMonths(): Double? {
+        val burn = burnRate()
+        if (burn <= 0.0) return null
+        return cashOnHand / burn
+    }
+
+    /** % change in monthly revenue between the two most recent months that had any revenue. */
+    fun revenueGrowthPercent(): Double? {
+        val byMonth = entries.filter { it.isCredit }
+            .groupBy { monthKeyAndLabel(it.timestampMillis).first }
+            .mapValues { (_, list) -> list.sumOf { it.amount } }
+            .toList()
+            .sortedByDescending { it.first }
+            .take(2)
+        if (byMonth.size < 2) return null
+        val latest = byMonth[0].second
+        val previous = byMonth[1].second
+        if (previous == 0.0) return null
+        return ((latest - previous) / previous) * 100
+    }
 
     /** Top cost centers by spend, for the Dashboard bar chart. */
     fun costCenterBars(limit: Int = 4): List<CostCenterBar> {
@@ -300,5 +472,34 @@ object AppRepository {
         val delta = trend.last().value - trend.first().value
         val sign = if (delta >= 0) "+" else ""
         return "$sign${formatPercent(delta.toDouble())}%"
+    }
+
+    /** Income vs expense per month (last [limit] months with data), for the Reports cash-flow chart. */
+    fun cashFlowByMonth(limit: Int = 6): List<CashFlowPoint> {
+        if (entries.isEmpty()) return emptyList()
+        return entries.groupBy { monthKeyAndLabel(it.timestampMillis) }
+            .toList()
+            .sortedBy { it.first.first }
+            .takeLast(limit)
+            .map { (keyLabel, list) ->
+                CashFlowPoint(
+                    monthLabel = keyLabel.second,
+                    income = list.filter { it.isCredit }.sumOf { it.amount },
+                    expense = list.filter { !it.isCredit }.sumOf { it.amount }
+                )
+            }
+    }
+
+    /** Full ledger as CSV text, for the Reports/Settings export feature. */
+    fun exportCsv(): String {
+        val sb = StringBuilder()
+        sb.append("Date,Catégorie,Centre de Coût,Type,Montant,Statut\n")
+        entries.sortedByDescending { it.timestampMillis }.forEach { e ->
+            val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.FRENCH).format(java.util.Date(e.timestampMillis))
+            val type = if (e.isCredit) "Recette" else "Dépense"
+            val categoryEscaped = "\"" + e.category.replace("\"", "\"\"") + "\""
+            sb.append("$dateStr,$categoryEscaped,${e.costCenterCode},$type,${e.amount},${e.status.label}\n")
+        }
+        return sb.toString()
     }
 }

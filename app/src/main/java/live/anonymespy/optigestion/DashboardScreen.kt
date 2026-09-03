@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,10 +22,12 @@ import androidx.compose.ui.unit.sp
 import live.anonymespy.optigestion.ui.theme.CaeColors
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
     val entries = AppRepository.entries // observing this list keeps the whole screen live
+    val budgetCategories = AppRepository.budgetCategories
 
-    val kpis = remember(entries.toList()) {
+    val kpis = remember(entries.toList(), AppRepository.cashOnHand) {
+        val runway = AppRepository.runwayMonths()
         listOf(
             KpiCard(
                 label = "MARGE NETTE",
@@ -33,15 +36,28 @@ fun DashboardScreen() {
                 isPositive = AppRepository.netMargin() >= 0
             ),
             KpiCard(
+                label = "RECETTES TOTALES",
+                value = formatCurrencyCompact(AppRepository.totalRevenue()),
+                deltaLabel = "${entries.count { it.isCredit }} écriture(s)",
+                isPositive = true
+            ),
+            KpiCard(
                 label = "COÛTS TOTAUX",
                 value = formatCurrencyCompact(AppRepository.totalCosts()),
                 deltaLabel = "${entries.count { !it.isCredit }} écriture(s)",
                 isPositive = false
+            ),
+            KpiCard(
+                label = "TRÉSORERIE (RUNWAY)",
+                value = if (runway != null) "${formatMonths(runway)} mois" else "∞",
+                deltaLabel = if (runway != null && runway < 3) "Critique" else "Stable",
+                isPositive = runway == null || runway >= 3
             )
         )
     }
     val costCenterBars = remember(entries.toList()) { AppRepository.costCenterBars() }
     val recentActivity = remember(entries.toList()) { AppRepository.recentActivity() }
+    val alerts = remember(budgetCategories.map { it.actualInput }, budgetCategories.map { it.budgetAmount }) { AppRepository.budgetAlerts() }
 
     Column(
         modifier = Modifier
@@ -51,11 +67,20 @@ fun DashboardScreen() {
     ) {
         Text(text = "Vue d'ensemble", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
+
+        QuickActionsRow(onNavigate = onNavigate)
+
+        Spacer(Modifier.height(20.dp))
 
         if (entries.isEmpty()) {
             DashboardEmptyState()
         } else {
+            if (alerts.isNotEmpty()) {
+                BudgetAlertBanner(alerts = alerts, onClick = { onNavigate(NavDestination.ANALYSIS) })
+                Spacer(Modifier.height(16.dp))
+            }
+
             KpiSection(kpis)
 
             Spacer(Modifier.height(24.dp))
@@ -65,6 +90,64 @@ fun DashboardScreen() {
             Spacer(Modifier.height(24.dp))
 
             RecentActivitySection(recentActivity)
+        }
+    }
+}
+
+/* ---------------- Quick actions ---------------- */
+
+@Composable
+private fun QuickActionsRow(onNavigate: (NavDestination) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        QuickActionChip(icon = Icons.Filled.TableChart, label = "Écritures", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.SHEETS) }
+        QuickActionChip(icon = Icons.Filled.Savings, label = "Budget", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.ANALYSIS) }
+        QuickActionChip(icon = Icons.Filled.QueryStats, label = "Rapports", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.STATS) }
+    }
+}
+
+@Composable
+private fun QuickActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(CaeColors.SurfaceContainerLowest)
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = CaeColors.Primary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(4.dp))
+        Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant)
+    }
+}
+
+/* ---------------- Budget alert banner ---------------- */
+
+@Composable
+private fun BudgetAlertBanner(alerts: List<BudgetAlert>, onClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.ErrorContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = Icons.Filled.Warning, contentDescription = null, tint = CaeColors.OnErrorContainer, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${alerts.size} catégorie(s) budgétaire(s) à surveiller",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = CaeColors.OnErrorContainer
+                )
+                Text(
+                    text = alerts.take(2).joinToString(" · ") { "${it.label} (${it.percentUsed}%)" },
+                    fontSize = 12.sp,
+                    color = CaeColors.OnErrorContainer
+                )
+            }
+            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = CaeColors.OnErrorContainer, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -136,7 +219,7 @@ private fun KpiCardView(kpi: KpiCard, modifier: Modifier = Modifier) {
                 Text(text = kpi.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
                 DeltaBadge(text = kpi.deltaLabel, isPositive = kpi.isPositive)
             }
-            Text(text = kpi.value, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
+            Text(text = kpi.value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
         }
     }
 }

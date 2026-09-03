@@ -1,60 +1,155 @@
 package live.anonymespy.optigestion
-/**
+
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import live.anonymespy.optigestion.CostCenterFootnoteIcon
-import live.anonymespy.optigestion.CostCenterSummary
-import live.anonymespy.optigestion.DepartmentBudget
-import live.anonymespy.optigestion.DepartmentIcon
 import live.anonymespy.optigestion.ui.theme.CaeColors
 
+/**
+ * Real, editable departments/cost centers. Spend for each one is derived
+ * live from AppRepository.entries (any Sheets entry whose costCenterCode
+ * matches), so this screen — and the dropdown Sheets now offers when
+ * picking a cost center — are always in sync.
+ */
 @Composable
-fun CostCentersScreen(
-    summaries: List<CostCenterSummary> = CostCentersSampleData.summaries,
-    departments: List<DepartmentBudget> = CostCentersSampleData.departments
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-    ) {
-        // Summary KPI section
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            summaries.forEach { summary ->
-                CostCenterSummaryCard(summary)
+fun CostCentersScreen() {
+    val costCenters = AppRepository.costCenters
+    val entries = AppRepository.entries
+
+    var showAddDialog by remember { mutableStateOf(false) }
+    var editingCenter by remember { mutableStateOf<CostCenter?>(null) }
+
+    val summaries = remember(costCenters.toList(), entries.toList()) { AppRepository.costCenterSummaries() }
+    val departments = remember(costCenters.toList(), entries.toList()) { AppRepository.departmentBudgets() }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Text(
+                text = "Centres de Coût",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = CaeColors.Primary
+            )
+            Text(
+                text = "Suivi du budget par département, dérivé de vos écritures Sheets.",
+                fontSize = 13.sp,
+                color = CaeColors.OnSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
+            )
+
+            if (costCenters.isEmpty()) {
+                EmptyCostCentersState(onAdd = { showAddDialog = true })
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    summaries.forEach { summary -> CostCenterSummaryCard(summary) }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                Text(
+                    text = "Répartition par Département",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = CaeColors.Primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    departments.forEach { dept ->
+                        DepartmentBudgetCard(
+                            dept = dept,
+                            onClick = { editingCenter = costCenters.find { it.id == dept.costCenterId } }
+                        )
+                    }
+                }
             }
+
+            Spacer(Modifier.height(72.dp))
         }
 
-        Spacer(Modifier.height(24.dp))
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            containerColor = CaeColors.Primary,
+            contentColor = CaeColors.OnPrimary
+        ) {
+            Icon(imageVector = Icons.Filled.Add, contentDescription = "Ajouter un centre de coût")
+        }
+    }
 
-        Text(
-            text = "Department Breakdown",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = CaeColors.Primary,
-            modifier = Modifier.padding(bottom = 8.dp)
+    if (showAddDialog) {
+        CostCenterFormDialog(
+            title = "Nouveau centre de coût",
+            initial = null,
+            onDismiss = { showAddDialog = false },
+            onSave = { cc -> AppRepository.addCostCenter(cc.code, cc.name, cc.icon, cc.monthlyBudget); showAddDialog = false },
+            onDelete = null
         )
+    }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            departments.forEach { dept ->
-                DepartmentBudgetCard(dept)
+    editingCenter?.let { cc ->
+        CostCenterFormDialog(
+            title = "Modifier le centre de coût",
+            initial = cc,
+            onDismiss = { editingCenter = null },
+            onSave = { updated -> AppRepository.updateCostCenter(updated); editingCenter = null },
+            onDelete = { AppRepository.deleteCostCenter(cc.id); editingCenter = null }
+        )
+    }
+}
+
+/* ---------------- Empty state ---------------- */
+
+@Composable
+private fun EmptyCostCentersState(onAdd: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = Icons.Filled.AccountTree, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(40.dp))
+            Spacer(Modifier.height(12.dp))
+            Text(text = "Aucun centre de coût", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Créez vos départements (IT, Marketing, Direction...) avec un code et un budget mensuel. Vos écritures Sheets s'y rattacheront automatiquement.",
+                fontSize = 13.sp,
+                color = CaeColors.OnSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onAdd, colors = ButtonDefaults.buttonColors(containerColor = CaeColors.Primary)) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Ajouter un centre de coût")
             }
         }
     }
@@ -99,7 +194,7 @@ private fun CostCenterSummaryCard(summary: CostCenterSummary) {
                     )
                     else -> {}
                 }
-                if (summary.footnoteIcon != null && summary.footnoteIcon != CostCenterFootnoteIcon.NONE) {
+                if (summary.footnoteIcon != CostCenterFootnoteIcon.NONE) {
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(text = summary.footnote, fontSize = 14.sp, color = summary.footnoteColor)
@@ -109,12 +204,12 @@ private fun CostCenterSummaryCard(summary: CostCenterSummary) {
 }
 
 @Composable
-private fun DepartmentBudgetCard(dept: DepartmentBudget) {
+private fun DepartmentBudgetCard(dept: DepartmentBudget, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             if (dept.isOverBudget) {
@@ -132,7 +227,7 @@ private fun DepartmentBudgetCard(dept: DepartmentBudget) {
                     verticalAlignment = Alignment.Top
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        DepartmentIconBadge(dept)
+                        DepartmentIconBadge(dept.icon)
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
@@ -156,24 +251,25 @@ private fun DepartmentBudgetCard(dept: DepartmentBudget) {
                             color = if (dept.isOverBudget) CaeColors.Error else CaeColors.OnSurface
                         )
                         Text(
-                            text = "${dept.percentOfBudget}% of budget",
+                            text = if (dept.budgetAmount > 0) "${dept.percentOfBudget}% of budget" else "Pas de budget défini",
                             fontSize = 14.sp,
                             color = if (dept.isOverBudget) CaeColors.Error else CaeColors.OnTertiaryContainer
                         )
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
-
-                BudgetProgressBar(percent = dept.percentOfBudget, isOverBudget = dept.isOverBudget)
+                if (dept.budgetAmount > 0) {
+                    Spacer(Modifier.height(16.dp))
+                    BudgetProgressBar(percent = dept.percentOfBudget, isOverBudget = dept.isOverBudget)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DepartmentIconBadge(dept: DepartmentBudget) {
-    val (icon, bg, tint) = when (dept.icon) {
+private fun DepartmentIconBadge(icon: DepartmentIcon) {
+    val (vector, bg, tint) = when (icon) {
         DepartmentIcon.PRODUCTION -> Triple(Icons.Filled.Build, CaeColors.SurfaceContainer, CaeColors.Primary)
         DepartmentIcon.RESEARCH -> Triple(Icons.Filled.Science, CaeColors.ErrorContainer, CaeColors.Error)
         DepartmentIcon.ADMIN -> Triple(Icons.Filled.Domain, CaeColors.SurfaceContainer, CaeColors.Primary)
@@ -186,7 +282,7 @@ private fun DepartmentIconBadge(dept: DepartmentBudget) {
             .background(bg),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = tint)
+        Icon(imageVector = vector, contentDescription = null, tint = tint)
     }
 }
 
@@ -198,7 +294,7 @@ private fun DepartmentIconBadge(dept: DepartmentBudget) {
  */
 @Composable
 private fun BudgetProgressBar(percent: Int, isOverBudget: Boolean) {
-    val clampedPercent = percent.coerceAtMost(100)
+    val clampedPercent = percent.coerceIn(0, 100)
     val overflowPercent = (percent - 100).coerceAtLeast(0)
 
     Box(
@@ -232,4 +328,104 @@ private fun BudgetProgressBar(percent: Int, isOverBudget: Boolean) {
             }
         }
     }
-} **/
+}
+
+/* ---------------- Add / edit form ---------------- */
+
+@Composable
+private fun CostCenterFormDialog(
+    title: String,
+    initial: CostCenter?,
+    onDismiss: () -> Unit,
+    onSave: (CostCenter) -> Unit,
+    onDelete: (() -> Unit)?
+) {
+    var code by remember { mutableStateOf(initial?.code ?: "") }
+    var name by remember { mutableStateOf(initial?.name ?: "") }
+    var budgetText by remember { mutableStateOf(initial?.monthlyBudget?.takeIf { it > 0 }?.toLong()?.toString() ?: "") }
+    var icon by remember { mutableStateOf(initial?.icon ?: DepartmentIcon.ADMIN) }
+    var iconMenuExpanded by remember { mutableStateOf(false) }
+
+    val isValid = code.isNotBlank() && name.isNotBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it.uppercase() },
+                    label = { Text("Code (ex: IT-01)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nom du département") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = budgetText,
+                    onValueChange = { budgetText = it.filter { c -> c.isDigit() } },
+                    label = { Text("Budget mensuel (0 = centre de recette)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Box {
+                    OutlinedTextField(
+                        value = icon.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Icône") },
+                        trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { iconMenuExpanded = true }
+                    )
+                    DropdownMenu(expanded = iconMenuExpanded, onDismissRequest = { iconMenuExpanded = false }) {
+                        DepartmentIcon.entries.forEach { i ->
+                            DropdownMenuItem(text = { Text(i.name) }, onClick = { icon = i; iconMenuExpanded = false })
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = isValid,
+                onClick = {
+                    onSave(
+                        CostCenter(
+                            id = initial?.id ?: java.util.UUID.randomUUID().toString(),
+                            code = code.trim(),
+                            name = name.trim(),
+                            icon = icon,
+                            monthlyBudget = budgetText.toDoubleOrNull() ?: 0.0
+                        )
+                    )
+                }
+            ) { Text("Enregistrer") }
+        },
+        dismissButton = {
+            Row {
+                if (onDelete != null) {
+                    TextButton(onClick = onDelete) { Text("Supprimer", color = CaeColors.Error) }
+                }
+                TextButton(onClick = onDismiss) { Text("Annuler") }
+            }
+        }
+    )
+}

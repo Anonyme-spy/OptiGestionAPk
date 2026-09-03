@@ -93,4 +93,19 @@ object TemplateData {
         BudgetCategoryUi(name = "Matériaux", icon = BudgetCategoryIcon.MATERIALS, budgetAmount = 1_071_000.0, initialActual = 1_120_000.0),
         BudgetCategoryUi(name = "Frais généraux", icon = BudgetCategoryIcon.OVERHEAD, budgetAmount = 404_000.0, initialActual = 352_600.0)
     )
+
+    /**
+     * Real, editable cost centers matching the costCenterCode values used
+     * above in sheetEntries(), so the Cost Centers screen and the Sheets
+     * cost-center dropdown are populated and in sync out of the box.
+     */
+    fun costCenters(): List<CostCenter> = listOf(
+        CostCenter(code = "IT-01", name = "Infrastructure IT", icon = DepartmentIcon.ADMIN, monthlyBudget = 150_000.0),
+        CostCenter(code = "IT-02", name = "Matériel IT", icon = DepartmentIcon.ADMIN, monthlyBudget = 200_000.0),
+        CostCenter(code = "MKT-04", name = "Marketing", icon = DepartmentIcon.SALES, monthlyBudget = 100_000.0),
+        CostCenter(code = "EXEC-01", name = "Direction / Conseil", icon = DepartmentIcon.ADMIN, monthlyBudget = 60_000.0),
+        CostCenter(code = "EXEC-02", name = "Déplacements Direction", icon = DepartmentIcon.ADMIN, monthlyBudget = 40_000.0),
+        CostCenter(code = "FAC-01", name = "Facilities / Bureaux", icon = DepartmentIcon.PRODUCTION, monthlyBudget = 500_000.0),
+        CostCenter(code = "VENTE-01", name = "Ventes", icon = DepartmentIcon.SALES, monthlyBudget = 0.0)
+    )
 }

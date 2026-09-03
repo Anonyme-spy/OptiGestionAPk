@@ -26,9 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import live.anonymespy.optigestion.ActivityIcon
 
-/* ============================================================
- *  1. COULEURS (extraites de la config Tailwind d'origine)
- * ============================================================ */
 object CaeColors {
     val Primary = Color(0xFF031635)
     val OnPrimary = Color(0xFFFFFFFF)
