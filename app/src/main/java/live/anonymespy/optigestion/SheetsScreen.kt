@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -72,7 +73,7 @@ fun SheetsScreen() {
                 onToggleFilterMenu = { showFilterMenu = !showFilterMenu },
                 onSelectFilter = { statusFilter = it; showFilterMenu = false },
                 onSort = { sortDescending = !sortDescending },
-                onImportExcel = { Toast.makeText(context, "Import Excel — bientôt disponible", Toast.LENGTH_SHORT).show() }
+                onImportExcel = { Toast.makeText(context, context.getString(R.string.toast_import_excel), Toast.LENGTH_SHORT).show() }
             )
 
             if (visibleEntries.isEmpty()) {
@@ -85,7 +86,7 @@ fun SheetsScreen() {
             }
 
             Text(
-                text = "${entries.size} écriture(s) au total",
+                text = stringResource(R.string.entries_count_format, entries.size),
                 fontSize = 12.sp,
                 color = CaeColors.OnSurfaceVariant,
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -104,13 +105,13 @@ fun SheetsScreen() {
             containerColor = CaeColors.Primary,
             contentColor = CaeColors.OnPrimary
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Ajouter une écriture")
+            Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.add_entry))
         }
     }
 
     if (showAddDialog) {
         EntryFormDialog(
-            title = "Nouvelle écriture",
+            title = stringResource(R.string.new_entry_title),
             initial = null,
             onDismiss = { showAddDialog = false },
             onSave = { entry -> AppRepository.addEntry(entry); showAddDialog = false },
@@ -120,7 +121,7 @@ fun SheetsScreen() {
 
     editingEntry?.let { entry ->
         EntryFormDialog(
-            title = "Modifier l'écriture",
+            title = stringResource(R.string.edit_entry_title),
             initial = entry,
             onDismiss = { editingEntry = null },
             onSave = { updated -> AppRepository.updateEntry(updated); editingEntry = null },
@@ -145,7 +146,7 @@ private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = if (hasAnyEntries) "Aucune écriture ne correspond à ce filtre" else "Aucune écriture pour le moment",
+            text = if (hasAnyEntries) stringResource(R.string.empty_sheets_filtered) else stringResource(R.string.empty_sheets_none),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = CaeColors.OnSurfaceVariant,
@@ -154,7 +155,7 @@ private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
         if (!hasAnyEntries) {
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Ajoutez votre première écriture pour commencer à alimenter le tableau de bord.",
+                text = stringResource(R.string.empty_sheets_body),
                 fontSize = 12.sp,
                 color = CaeColors.OnSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -163,7 +164,7 @@ private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
             Button(onClick = onAddEntry, colors = ButtonDefaults.buttonColors(containerColor = CaeColors.Primary)) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Ajouter une écriture")
+                Text(stringResource(R.string.add_entry))
             }
         }
     }
@@ -178,12 +179,12 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, modifier
         onValueChange = onValueChange,
         modifier = modifier,
         singleLine = true,
-        placeholder = { Text("Rechercher une catégorie ou un centre de coût…") },
+        placeholder = { Text(stringResource(R.string.search_placeholder)) },
         leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null, tint = CaeColors.OnSurfaceVariant) },
         trailingIcon = {
             if (value.isNotEmpty()) {
                 IconButton(onClick = { onValueChange("") }) {
-                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Effacer", tint = CaeColors.OnSurfaceVariant)
+                    Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(R.string.clear), tint = CaeColors.OnSurfaceVariant)
                 }
             }
         },
@@ -218,18 +219,18 @@ private fun ControlsBar(
             Box {
                 ControlChip(
                     icon = Icons.Filled.FilterList,
-                    label = activeFilter?.label ?: "Filtrer",
+                    label = activeFilter?.let { stringResource(it.labelResId) } ?: stringResource(R.string.filter_label),
                     onClick = onToggleFilterMenu
                 )
                 DropdownMenu(expanded = showFilterMenu, onDismissRequest = onToggleFilterMenu) {
-                    DropdownMenuItem(text = { Text("Toutes") }, onClick = { onSelectFilter(null) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = { onSelectFilter(null) })
                     EntryStatus.entries.forEach { status ->
-                        DropdownMenuItem(text = { Text(status.label) }, onClick = { onSelectFilter(status) })
+                        DropdownMenuItem(text = { Text(stringResource(status.labelResId)) }, onClick = { onSelectFilter(status) })
                     }
                 }
             }
-            ControlChip(icon = Icons.Filled.Sort, label = "Trier", onClick = onSort)
-            ControlChip(icon = Icons.Filled.UploadFile, label = "Importer Excel", onClick = onImportExcel)
+            ControlChip(icon = Icons.Filled.Sort, label = stringResource(R.string.control_sort), onClick = onSort)
+            ControlChip(icon = Icons.Filled.UploadFile, label = stringResource(R.string.control_import_excel), onClick = onImportExcel)
         }
         Text(text = periodLabel, fontSize = 14.sp, color = CaeColors.OnSurfaceVariant)
     }
@@ -281,10 +282,10 @@ private fun TableHeader() {
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Catégorie", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(COL_CATEGORY_WEIGHT).padding(horizontal = 12.dp))
-        Text("Montant", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.End, modifier = Modifier.weight(COL_AMOUNT_WEIGHT).padding(horizontal = 12.dp))
-        Text("Centre de Coût", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_COST_CENTER_WEIGHT).padding(horizontal = 4.dp))
-        Text("Statut", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_STATUS_WEIGHT).padding(horizontal = 4.dp))
+        Text(stringResource(R.string.sheet_col_category), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(COL_CATEGORY_WEIGHT).padding(horizontal = 12.dp))
+        Text(stringResource(R.string.sheet_col_amount), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.End, modifier = Modifier.weight(COL_AMOUNT_WEIGHT).padding(horizontal = 12.dp))
+        Text(stringResource(R.string.sheet_col_cost_center), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_COST_CENTER_WEIGHT).padding(horizontal = 4.dp))
+        Text(stringResource(R.string.sheet_col_status), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_STATUS_WEIGHT).padding(horizontal = 4.dp))
     }
     HorizontalDivider(color = CaeColors.SurfaceVariant, thickness = 2.dp)
 }
@@ -334,7 +335,7 @@ private fun StatusPill(status: EntryStatus) {
     Box(
         modifier = Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
-        Text(text = status.label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = text)
+        Text(text = stringResource(status.labelResId), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = text)
     }
 }
 
@@ -380,14 +381,14 @@ private fun EntryFormDialog(
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("Catégorie") },
+                    label = { Text(stringResource(R.string.form_label_category)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it.filter { c -> c.isDigit() } },
-                    label = { Text("Montant") },
+                    label = { Text(stringResource(R.string.form_label_amount)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -401,7 +402,7 @@ private fun EntryFormDialog(
                                 ?.let { "${it.code} — ${it.name}" } ?: costCenterCode,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Centre de coût") },
+                            label = { Text(stringResource(R.string.form_label_cost_center)) },
                             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -426,26 +427,26 @@ private fun EntryFormDialog(
                     OutlinedTextField(
                         value = costCenterCode,
                         onValueChange = { costCenterCode = it.uppercase() },
-                        label = { Text("Centre de coût (ex: IT-01)") },
-                        supportingText = { Text("Astuce : créez des centres de coût dans l'onglet Centres pour choisir dans une liste.") },
+                        label = { Text(stringResource(R.string.form_label_cost_center_example)) },
+                        supportingText = { Text(stringResource(R.string.form_costcenter_tip)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("Type :", fontSize = 14.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(1f))
-                    FilterChip(selected = !isCredit, onClick = { isCredit = false }, label = { Text("Dépense") })
+                    Text(stringResource(R.string.form_type_label), fontSize = 14.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(1f))
+                    FilterChip(selected = !isCredit, onClick = { isCredit = false }, label = { Text(stringResource(R.string.filter_expense)) })
                     Spacer(Modifier.width(8.dp))
-                    FilterChip(selected = isCredit, onClick = { isCredit = true }, label = { Text("Recette") })
+                    FilterChip(selected = isCredit, onClick = { isCredit = true }, label = { Text(stringResource(R.string.filter_income)) })
                 }
 
                 Box {
                     OutlinedTextField(
-                        value = status.label,
+                        value = stringResource(status.labelResId),
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Statut") },
+                        label = { Text(stringResource(R.string.form_label_status)) },
                         trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -462,7 +463,7 @@ private fun EntryFormDialog(
                     )
                     DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
                         EntryStatus.entries.forEach { s ->
-                            DropdownMenuItem(text = { Text(s.label) }, onClick = { status = s; statusMenuExpanded = false })
+                            DropdownMenuItem(text = { Text(stringResource(s.labelResId)) }, onClick = { status = s; statusMenuExpanded = false })
                         }
                     }
                 }
@@ -472,7 +473,7 @@ private fun EntryFormDialog(
                         value = icon.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Icône") },
+                        label = { Text(stringResource(R.string.form_label_icon)) },
                         trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -509,14 +510,14 @@ private fun EntryFormDialog(
                         )
                     )
                 }
-            ) { Text("Enregistrer") }
+            ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Supprimer", color = CaeColors.Error) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.delete), color = CaeColors.Error) }
                 }
-                TextButton(onClick = onDismiss) { Text("Annuler") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
             }
         }
     )

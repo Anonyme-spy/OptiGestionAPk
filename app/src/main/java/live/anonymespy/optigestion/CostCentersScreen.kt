@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,18 +48,8 @@ fun CostCentersScreen() {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Text(
-                text = "Centres de Coût",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = CaeColors.Primary
-            )
-            Text(
-                text = "Suivi du budget par département, dérivé de vos écritures Sheets.",
-                fontSize = 13.sp,
-                color = CaeColors.OnSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
-            )
+            Text(text = stringResource(R.string.cost_centers_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+            Text(text = stringResource(R.string.cost_centers_subtitle), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
 
             if (costCenters.isEmpty()) {
                 EmptyCostCentersState(onAdd = { showAddDialog = true })
@@ -69,13 +60,7 @@ fun CostCentersScreen() {
 
                 Spacer(Modifier.height(24.dp))
 
-                Text(
-                    text = "Répartition par Département",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = CaeColors.Primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Text(text = stringResource(R.string.cost_centers_distribution_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, modifier = Modifier.padding(bottom = 8.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     departments.forEach { dept ->
@@ -97,13 +82,13 @@ fun CostCentersScreen() {
             containerColor = CaeColors.Primary,
             contentColor = CaeColors.OnPrimary
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Ajouter un centre de coût")
+            Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.add_cost_center))
         }
     }
 
     if (showAddDialog) {
         CostCenterFormDialog(
-            title = "Nouveau centre de coût",
+            title = stringResource(R.string.new_cost_center_title),
             initial = null,
             onDismiss = { showAddDialog = false },
             onSave = { cc -> AppRepository.addCostCenter(cc.code, cc.name, cc.icon, cc.monthlyBudget); showAddDialog = false },
@@ -113,7 +98,7 @@ fun CostCentersScreen() {
 
     editingCenter?.let { cc ->
         CostCenterFormDialog(
-            title = "Modifier le centre de coût",
+            title = stringResource(R.string.edit_cost_center_title),
             initial = cc,
             onDismiss = { editingCenter = null },
             onSave = { updated -> AppRepository.updateCostCenter(updated); editingCenter = null },
@@ -137,10 +122,10 @@ private fun EmptyCostCentersState(onAdd: () -> Unit) {
         ) {
             Icon(imageVector = Icons.Filled.AccountTree, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(40.dp))
             Spacer(Modifier.height(12.dp))
-            Text(text = "Aucun centre de coût", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
+            Text(text = stringResource(R.string.empty_cost_centers_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Créez vos départements (IT, Marketing, Direction...) avec un code et un budget mensuel. Vos écritures Sheets s'y rattacheront automatiquement.",
+                text = stringResource(R.string.empty_cost_centers_body),
                 fontSize = 13.sp,
                 color = CaeColors.OnSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -149,7 +134,7 @@ private fun EmptyCostCentersState(onAdd: () -> Unit) {
             Button(onClick = onAdd, colors = ButtonDefaults.buttonColors(containerColor = CaeColors.Primary)) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Ajouter un centre de coût")
+                Text(stringResource(R.string.add_cost_center))
             }
         }
     }
@@ -251,7 +236,7 @@ private fun DepartmentBudgetCard(dept: DepartmentBudget, onClick: () -> Unit) {
                             color = if (dept.isOverBudget) CaeColors.Error else CaeColors.OnSurface
                         )
                         Text(
-                            text = if (dept.budgetAmount > 0) "${dept.percentOfBudget}% of budget" else "Pas de budget défini",
+                            text = if (dept.budgetAmount > 0) stringResource(R.string.cost_center_footnote_percent_format, dept.percentOfBudget) else stringResource(R.string.cost_center_footnote_none),
                             fontSize = 14.sp,
                             color = if (dept.isOverBudget) CaeColors.Error else CaeColors.OnTertiaryContainer
                         )
@@ -359,21 +344,21 @@ private fun CostCenterFormDialog(
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it.uppercase() },
-                    label = { Text("Code (ex: IT-01)") },
+                    label = { Text(stringResource(R.string.form_label_cost_center_code)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nom du département") },
+                    label = { Text(stringResource(R.string.form_label_cost_center_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = budgetText,
                     onValueChange = { budgetText = it.filter { c -> c.isDigit() } },
-                    label = { Text("Budget mensuel (0 = centre de recette)") },
+                    label = { Text(stringResource(R.string.form_label_monthly_budget)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -383,7 +368,7 @@ private fun CostCenterFormDialog(
                         value = icon.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Icône") },
+                        label = { Text(stringResource(R.string.form_label_icon)) },
                         trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -417,14 +402,14 @@ private fun CostCenterFormDialog(
                         )
                     )
                 }
-            ) { Text("Enregistrer") }
+            ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Supprimer", color = CaeColors.Error) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.delete), color = CaeColors.Error) }
                 }
-                TextButton(onClick = onDismiss) { Text("Annuler") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
             }
         }
     )

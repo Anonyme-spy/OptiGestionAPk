@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,16 +73,16 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
     if (showResetConfirm) {
         AlertDialog(
             onDismissRequest = { showResetConfirm = false },
-            title = { Text("Réinitialiser les données ?") },
-            text = { Text("Toutes vos écritures, budgets et centres de coût seront supprimés. Vous pourrez recharger le modèle d'exemple ou repartir de zéro.") },
+            title = { Text(stringResource(R.string.reset_dialog_title)) },
+            text = { Text(stringResource(R.string.reset_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     showResetConfirm = false
                     AppRepository.resetToOnboarding()
-                }) { Text("Réinitialiser", color = CaeColors.Error) }
+                }) { Text(stringResource(R.string.reset_confirm), color = CaeColors.Error) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showResetConfirm = false }) { Text(stringResource(R.string.reset_cancel)) }
             }
         )
     }
@@ -93,7 +94,7 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
                 SettingsTopAppBar(onBack = { showSettings = false })
             } else {
                 CaeTopAppBar(
-                    title = currentDestination.screenTitle(),
+                    title = currentDestination.topBarTitle(),
                     periodLabel = AppRepository.periodLabel,
                     onResetClick = { showResetConfirm = true },
                     onSettingsClick = { showSettings = true }
@@ -131,13 +132,24 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
     }
 }
 
-/** Maps each destination to the title shown in the shared top app bar. */
-private fun NavDestination.screenTitle(): String = when (this) {
-    NavDestination.DASHBOARD -> "CAE Analytics"
-    NavDestination.SHEETS -> "Sheets"
-    NavDestination.ANALYSIS -> "Budget vs Actual"
-    NavDestination.COST_CENTERS -> "Centres de Coût"
-    NavDestination.STATS -> "Rapports"
+/** Localized label for the bottom nav / side rail. */
+@Composable
+fun NavDestination.navLabel(): String = when (this) {
+    NavDestination.DASHBOARD -> stringResource(R.string.nav_dashboard)
+    NavDestination.SHEETS -> stringResource(R.string.nav_sheets)
+    NavDestination.ANALYSIS -> stringResource(R.string.nav_budget)
+    NavDestination.COST_CENTERS -> stringResource(R.string.nav_cost_centers)
+    NavDestination.STATS -> stringResource(R.string.nav_reports)
+}
+
+/** Localized title shown in the shared top app bar. */
+@Composable
+fun NavDestination.topBarTitle(): String = when (this) {
+    NavDestination.DASHBOARD -> stringResource(R.string.top_bar_dashboard)
+    NavDestination.SHEETS -> stringResource(R.string.top_bar_sheets)
+    NavDestination.ANALYSIS -> stringResource(R.string.top_bar_budget)
+    NavDestination.COST_CENTERS -> stringResource(R.string.top_bar_cost_centers)
+    NavDestination.STATS -> stringResource(R.string.top_bar_reports)
 }
 
 /* ============================================================
@@ -169,7 +181,7 @@ private fun CaeTopAppBar(title: String, periodLabel: String, onResetClick: () ->
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
-                        text = { Text("Paramètres") },
+                        text = { Text(stringResource(R.string.menu_settings)) },
                         leadingIcon = { Icon(Icons.Filled.Settings, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
@@ -177,7 +189,7 @@ private fun CaeTopAppBar(title: String, periodLabel: String, onResetClick: () ->
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Réinitialiser les données") },
+                        text = { Text(stringResource(R.string.menu_reset)) },
                         leadingIcon = { Icon(Icons.Filled.RestartAlt, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
@@ -198,10 +210,10 @@ private fun CaeTopAppBar(title: String, periodLabel: String, onResetClick: () ->
 @Composable
 private fun SettingsTopAppBar(onBack: () -> Unit) {
     TopAppBar(
-        title = { Text(text = "Paramètres", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = CaeColors.Primary) },
+        title = { Text(text = stringResource(R.string.top_bar_settings), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = CaeColors.Primary) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = CaeColors.Primary)
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.content_desc_back), tint = CaeColors.Primary)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -234,11 +246,12 @@ private fun CaeBottomNavBar(
 ) {
     NavigationBar(containerColor = CaeColors.SurfaceContainer) {
         NavDestination.entries.forEach { destination ->
+            val label = destination.navLabel()
             NavigationBarItem(
                 selected = selected == destination,
                 onClick = { onSelect(destination) },
-                icon = { Icon(imageVector = destination.icon(), contentDescription = destination.label) },
-                label = { Text(text = destination.label, fontSize = 11.sp) },
+                icon = { Icon(imageVector = destination.icon(), contentDescription = label) },
+                label = { Text(text = label, fontSize = 11.sp) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = CaeColors.OnPrimaryContainer,
                     selectedTextColor = CaeColors.OnPrimaryContainer,
@@ -271,6 +284,7 @@ private fun CaeSideNavRail(
     ) {
         NavDestination.entries.forEach { destination ->
             val isSelected = selected == destination
+            val label = destination.navLabel()
             Column(
                 modifier = Modifier
                     .size(64.dp)
@@ -282,12 +296,12 @@ private fun CaeSideNavRail(
             ) {
                 Icon(
                     imageVector = destination.icon(),
-                    contentDescription = destination.label,
+                    contentDescription = label,
                     tint = if (isSelected) CaeColors.OnPrimaryContainer else CaeColors.OnSecondaryContainer
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = destination.label,
+                    text = label,
                     fontSize = 10.sp,
                     color = if (isSelected) CaeColors.OnPrimaryContainer else CaeColors.OnSecondaryContainer
                 )

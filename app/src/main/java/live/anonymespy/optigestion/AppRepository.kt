@@ -30,6 +30,7 @@ object AppRepository {
     private const val KEY_CURRENCY = "currency"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_CASH_ON_HAND = "cash_on_hand"
+    private const val KEY_LANGUAGE = "language"
 
     private lateinit var prefs: SharedPreferences
 
@@ -47,6 +48,10 @@ object AppRepository {
 
     /** Cash currently available, used to compute the runway KPI on Dashboard/Reports. */
     var cashOnHand by mutableStateOf(0.0)
+        private set
+
+    /** Display language. Only Dashboard/Navigation/Settings are localized so far — see Strings.kt. */
+    var language by mutableStateOf(AppLanguage.FRENCH)
         private set
 
     /** The transactional ledger shown on the Sheets screen. Empty by default. */
@@ -71,6 +76,14 @@ object AppRepository {
             themeMode = runCatching { ThemeMode.valueOf(saved) }.getOrDefault(ThemeMode.SYSTEM)
         }
         cashOnHand = prefs.getFloat(KEY_CASH_ON_HAND, 0f).toDouble()
+        prefs.getString(KEY_LANGUAGE, null)?.let { saved ->
+            language = runCatching { AppLanguage.valueOf(saved) }.getOrDefault(AppLanguage.FRENCH)
+        }
+        // Bootstrap: make sure the per-app locale matches our saved preference on
+        // cold start (covers the very first run after this feature ships, before
+        // AppCompatDelegate has its own record of a choice). selectLanguage()
+        // keeps the two in sync from here on for every subsequent change.
+        applyAppLanguage(language)
         hasChosenSetup = prefs.getBoolean(KEY_INITIALIZED, false)
         if (hasChosenSetup) restoreFromPrefs()
     }
@@ -91,6 +104,13 @@ object AppRepository {
     fun selectCashOnHand(amount: Double) {
         cashOnHand = amount
         if (::prefs.isInitialized) prefs.edit().putFloat(KEY_CASH_ON_HAND, amount.toFloat()).apply()
+    }
+
+    /** Display language is a device setting, kept even across a full data reset. */
+    fun selectLanguage(newLanguage: AppLanguage) {
+        language = newLanguage
+        if (::prefs.isInitialized) prefs.edit().putString(KEY_LANGUAGE, newLanguage.name).apply()
+        applyAppLanguage(newLanguage)
     }
 
     /* ---------------- Onboarding ---------------- */
@@ -498,7 +518,7 @@ object AppRepository {
             val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.FRENCH).format(java.util.Date(e.timestampMillis))
             val type = if (e.isCredit) "Recette" else "Dépense"
             val categoryEscaped = "\"" + e.category.replace("\"", "\"\"") + "\""
-            sb.append("$dateStr,$categoryEscaped,${e.costCenterCode},$type,${e.amount},${e.status.label}\n")
+            sb.append("$dateStr,$categoryEscaped,${e.costCenterCode},$type,${e.amount},${e.status.name}\n")
         }
         return sb.toString()
     }

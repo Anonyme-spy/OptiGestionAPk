@@ -15,46 +15,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import live.anonymespy.optigestion.ui.theme.CaeColors
 
+/**
+ * Redesigned around a single clear hierarchy instead of four same-weight
+ * tiles: one hero card (net margin, with a revenue/cost breakdown bar),
+ * a row of three supporting metrics, then charts and activity below.
+ *
+ * DeltaBadge lives in SharedComponents.kt, not here — it's also used by
+ * StatsScreen.kt, and keeping it screen-local was exactly what broke that
+ * file the last time this screen got redesigned.
+ */
 @Composable
 fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
     val entries = AppRepository.entries // observing this list keeps the whole screen live
     val budgetCategories = AppRepository.budgetCategories
 
-    val kpis = remember(entries.toList(), AppRepository.cashOnHand) {
-        val runway = AppRepository.runwayMonths()
-        listOf(
-            KpiCard(
-                label = "MARGE NETTE",
-                value = formatCurrencyCompact(AppRepository.netMargin()),
-                deltaLabel = if (AppRepository.netMargin() >= 0) "Positive" else "Négative",
-                isPositive = AppRepository.netMargin() >= 0
-            ),
-            KpiCard(
-                label = "RECETTES TOTALES",
-                value = formatCurrencyCompact(AppRepository.totalRevenue()),
-                deltaLabel = "${entries.count { it.isCredit }} écriture(s)",
-                isPositive = true
-            ),
-            KpiCard(
-                label = "COÛTS TOTAUX",
-                value = formatCurrencyCompact(AppRepository.totalCosts()),
-                deltaLabel = "${entries.count { !it.isCredit }} écriture(s)",
-                isPositive = false
-            ),
-            KpiCard(
-                label = "TRÉSORERIE (RUNWAY)",
-                value = if (runway != null) "${formatMonths(runway)} mois" else "∞",
-                deltaLabel = if (runway != null && runway < 3) "Critique" else "Stable",
-                isPositive = runway == null || runway >= 3
-            )
-        )
-    }
+    val netMargin = remember(entries.toList()) { AppRepository.netMargin() }
+    val revenue = remember(entries.toList()) { AppRepository.totalRevenue() }
+    val costs = remember(entries.toList()) { AppRepository.totalCosts() }
+    val runway = remember(entries.toList(), AppRepository.cashOnHand) { AppRepository.runwayMonths() }
     val costCenterBars = remember(entries.toList()) { AppRepository.costCenterBars() }
     val recentActivity = remember(entries.toList()) { AppRepository.recentActivity() }
     val alerts = remember(budgetCategories.map { it.actualInput }, budgetCategories.map { it.budgetAmount }) { AppRepository.budgetAlerts() }
@@ -65,13 +51,9 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
-        Text(text = "Vue d'ensemble", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        Text(text = stringResource(R.string.dashboard_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
 
         Spacer(Modifier.height(16.dp))
-
-        QuickActionsRow(onNavigate = onNavigate)
-
-        Spacer(Modifier.height(20.dp))
 
         if (entries.isEmpty()) {
             DashboardEmptyState()
@@ -81,7 +63,15 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
                 Spacer(Modifier.height(16.dp))
             }
 
-            KpiSection(kpis)
+            HeroMarginCard(netMargin = netMargin, revenue = revenue, costs = costs)
+
+            Spacer(Modifier.height(12.dp))
+
+            SecondaryMetricsRow(revenue = revenue, costs = costs, runway = runway)
+
+            Spacer(Modifier.height(16.dp))
+
+            QuickActionsRow(onNavigate = onNavigate)
 
             Spacer(Modifier.height(24.dp))
 
@@ -94,28 +84,155 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
     }
 }
 
+/* ---------------- Hero card ---------------- */
+
+@Composable
+private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double) {
+    val isPositive = netMargin >= 0
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.Primary),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = stringResource(R.string.kpi_net_margin),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.6.sp,
+                    color = CaeColors.OnPrimary.copy(alpha = 0.7f)
+                )
+                HeroDeltaBadge(isPositive = isPositive, label = stringResource(if (isPositive) R.string.status_positive else R.string.status_negative))
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(text = formatCurrencyCompact(netMargin), fontSize = 36.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnPrimary)
+
+            Spacer(Modifier.height(16.dp))
+
+            HeroBreakdownBar(revenue = revenue, costs = costs)
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                val revenueLabel = stringResource(R.string.kpi_revenue).lowercase().replaceFirstChar { it.uppercase() }
+                val costsLabel = stringResource(R.string.kpi_costs).lowercase().replaceFirstChar { it.uppercase() }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(CaeColors.TertiaryFixedDim))
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = "$revenueLabel · ${formatCurrencyCompact(revenue)}", fontSize = 11.sp, color = CaeColors.OnPrimary.copy(alpha = 0.7f))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(CaeColors.OnPrimary.copy(alpha = 0.4f)))
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = "$costsLabel · ${formatCurrencyCompact(costs)}", fontSize = 11.sp, color = CaeColors.OnPrimary.copy(alpha = 0.7f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroBreakdownBar(revenue: Double, costs: Double) {
+    val total = (revenue + costs).takeIf { it > 0 } ?: 1.0
+    val revenueFraction = (revenue / total).toFloat().coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(CaeColors.OnPrimary.copy(alpha = 0.15f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(revenueFraction)
+                .clip(RoundedCornerShape(50))
+                .background(CaeColors.TertiaryFixedDim)
+        )
+    }
+}
+
+@Composable
+private fun HeroDeltaBadge(isPositive: Boolean, label: String) {
+    val icon = if (isPositive) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(CaeColors.OnPrimary.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = CaeColors.OnPrimary, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(text = label, fontSize = 12.sp, color = CaeColors.OnPrimary)
+    }
+}
+
+/* ---------------- Secondary metrics row ---------------- */
+
+@Composable
+private fun SecondaryMetricsRow(revenue: Double, costs: Double, runway: Double?) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        SecondaryMetricTile(
+            label = stringResource(R.string.kpi_revenue),
+            value = formatCurrencyCompact(revenue),
+            modifier = Modifier.weight(1f)
+        )
+        SecondaryMetricTile(
+            label = stringResource(R.string.kpi_costs),
+            value = formatCurrencyCompact(costs),
+            modifier = Modifier.weight(1f)
+        )
+        SecondaryMetricTile(
+            label = stringResource(R.string.kpi_runway),
+            value = if (runway != null) "${formatMonths(runway)} ${stringResource(R.string.months_suffix)}" else stringResource(R.string.infinite_symbol),
+            valueColor = if (runway != null && runway < 3) CaeColors.Error else CaeColors.Primary,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun SecondaryMetricTile(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color = CaeColors.Primary, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.4.sp, color = CaeColors.OnSurfaceVariant, maxLines = 1)
+            Spacer(Modifier.height(4.dp))
+            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = valueColor, maxLines = 1)
+        }
+    }
+}
+
 /* ---------------- Quick actions ---------------- */
 
 @Composable
 private fun QuickActionsRow(onNavigate: (NavDestination) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        QuickActionChip(icon = Icons.Filled.TableChart, label = "Écritures", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.SHEETS) }
-        QuickActionChip(icon = Icons.Filled.Savings, label = "Budget", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.ANALYSIS) }
-        QuickActionChip(icon = Icons.Filled.QueryStats, label = "Rapports", modifier = Modifier.weight(1f)) { onNavigate(NavDestination.STATS) }
+        QuickActionChip(icon = Icons.Filled.TableChart, label = stringResource(R.string.quick_action_entries), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.SHEETS) }
+        QuickActionChip(icon = Icons.Filled.Savings, label = stringResource(R.string.quick_action_budget), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.ANALYSIS) }
+        QuickActionChip(icon = Icons.Filled.QueryStats, label = stringResource(R.string.quick_action_reports), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.STATS) }
     }
 }
 
 @Composable
-private fun QuickActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun QuickActionChip(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(CaeColors.SurfaceContainerLowest)
             .clickable { onClick() }
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = CaeColors.Primary, modifier = Modifier.size(20.dp))
+        Icon(imageVector = icon, contentDescription = null, tint = CaeColors.Primary, modifier = Modifier.size(18.dp))
         Spacer(Modifier.height(4.dp))
         Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant)
     }
@@ -136,7 +253,7 @@ private fun BudgetAlertBanner(alerts: List<BudgetAlert>, onClick: () -> Unit) {
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${alerts.size} catégorie(s) budgétaire(s) à surveiller",
+                    text = stringResource(R.string.alert_banner_title_format, alerts.size),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = CaeColors.OnErrorContainer
@@ -147,7 +264,7 @@ private fun BudgetAlertBanner(alerts: List<BudgetAlert>, onClick: () -> Unit) {
                     color = CaeColors.OnErrorContainer
                 )
             }
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = CaeColors.OnErrorContainer, modifier = Modifier.size(18.dp))
+            Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null, tint = CaeColors.OnErrorContainer, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -166,7 +283,7 @@ private fun DashboardEmptyState() {
             Icon(imageVector = Icons.Filled.QueryStats, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(40.dp))
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "Votre tableau de bord est vide",
+                text = stringResource(R.string.dashboard_empty_title),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = CaeColors.Primary,
@@ -174,69 +291,12 @@ private fun DashboardEmptyState() {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Ajoutez vos premières écritures dans l'onglet Sheets pour voir vos indicateurs, vos coûts par centre et votre activité récente.",
+                text = stringResource(R.string.dashboard_empty_body),
                 fontSize = 13.sp,
                 color = CaeColors.OnSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
-    }
-}
-
-/* ---------------- KPI cards ---------------- */
-
-@Composable
-private fun KpiSection(kpis: List<KpiCard>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        kpis.chunked(2).forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                rowItems.forEach { kpi ->
-                    KpiCardView(kpi = kpi, modifier = Modifier.weight(1f))
-                }
-                if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-@Composable
-private fun KpiCardView(kpi: KpiCard, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.height(128.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(text = kpi.label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
-                DeltaBadge(text = kpi.deltaLabel, isPositive = kpi.isPositive)
-            }
-            Text(text = kpi.value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
-        }
-    }
-}
-
-@Composable
-internal fun DeltaBadge(text: String, isPositive: Boolean) {
-    val backgroundColor = if (isPositive) CaeColors.TertiaryContainer.copy(alpha = 0.1f) else CaeColors.ErrorContainer.copy(alpha = 0.2f)
-    val contentColor = if (isPositive) CaeColors.OnTertiaryContainer else CaeColors.OnErrorContainer
-    val icon = if (isPositive) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown
-
-    Row(
-        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(backgroundColor).padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(14.dp))
-        Spacer(Modifier.width(4.dp))
-        Text(text = text, fontSize = 12.sp, color = contentColor)
     }
 }
 
@@ -250,12 +310,12 @@ private fun CostCenterSection(bars: List<CostCenterBar>) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Coûts par Centre", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+            Text(text = stringResource(R.string.cost_center_section_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
 
             Spacer(Modifier.height(24.dp))
 
             if (bars.isEmpty()) {
-                Text(text = "Aucune dépense enregistrée pour l'instant.", fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
+                Text(text = stringResource(R.string.cost_center_empty), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
                 return@Column
             }
 
@@ -309,12 +369,12 @@ private fun RecentActivitySection(items: List<ActivityItem>) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Activité Récente", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+            Text(text = stringResource(R.string.activity_section_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
 
             Spacer(Modifier.height(12.dp))
 
             if (items.isEmpty()) {
-                Text(text = "Rien à afficher pour l'instant.", fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
+                Text(text = stringResource(R.string.activity_empty), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
             } else {
                 items.forEachIndexed { index, item ->
                     ActivityRow(item = item)

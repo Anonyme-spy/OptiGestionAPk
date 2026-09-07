@@ -1,5 +1,6 @@
 package live.anonymespy.optigestion
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,11 +13,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -25,13 +28,19 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 import live.anonymespy.optigestion.ui.theme.ThemeMode
 
 /**
- * Theme + currency + cash-on-hand pickers, plus data export — read/write
- * AppRepository directly, so every screen updates immediately (colours via
- * CaeColors, amounts via formatCurrency, runway via cashOnHand).
+ * Theme + language + currency + cash-on-hand pickers, plus data export —
+ * read/write AppRepository directly, so every screen updates immediately
+ * (colours via CaeColors, text via strings.xml + AppCompatDelegate, amounts
+ * via formatCurrency, runway via cashOnHand).
  */
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
+    // Recreating is the reliable fallback: AppCompatDelegate.setApplicationLocales()
+    // (called inside AppRepository.selectLanguage()) is supposed to recreate an
+    // AppCompatActivity automatically, but forcing it here removes any doubt
+    // instead of hoping the OS-version-dependent auto path fires.
+    val activity = context as? Activity
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -39,9 +48,9 @@ fun SettingsScreen() {
             context.contentResolver.openOutputStream(uri)?.use { out ->
                 out.write(AppRepository.exportCsv().toByteArray())
             }
-            Toast.makeText(context, "Données exportées avec succès", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "OK", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(context, "Échec de l'export", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -51,7 +60,29 @@ fun SettingsScreen() {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        SectionHeader(title = "Apparence", subtitle = "Choisissez le thème de couleurs de l'app.")
+        SectionHeader(title = stringResource(R.string.settings_language), subtitle = stringResource(R.string.settings_language_subtitle))
+
+        Spacer(Modifier.height(16.dp))
+
+        SettingsCard {
+            AppLanguage.entries.forEachIndexed { index, option ->
+                LanguageRow(
+                    option = option,
+                    selected = AppRepository.language == option,
+                    onSelect = {
+                        AppRepository.selectLanguage(option)
+                        activity?.recreate()
+                    }
+                )
+                if (index != AppLanguage.entries.lastIndex) {
+                    HorizontalDivider(color = CaeColors.SurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        SectionHeader(title = stringResource(R.string.settings_appearance), subtitle = stringResource(R.string.settings_appearance_subtitle))
 
         Spacer(Modifier.height(16.dp))
 
@@ -70,7 +101,7 @@ fun SettingsScreen() {
 
         Spacer(Modifier.height(28.dp))
 
-        SectionHeader(title = "Devise", subtitle = "Utilisée pour tous les montants affichés dans l'app.")
+        SectionHeader(title = stringResource(R.string.settings_currency), subtitle = stringResource(R.string.settings_currency_subtitle))
 
         Spacer(Modifier.height(16.dp))
 
@@ -89,7 +120,7 @@ fun SettingsScreen() {
 
         Spacer(Modifier.height(28.dp))
 
-        SectionHeader(title = "Trésorerie", subtitle = "Utilisée pour calculer votre autonomie financière (runway) sur le Dashboard et les Rapports.")
+        SectionHeader(title = stringResource(R.string.settings_cash), subtitle = stringResource(R.string.settings_cash_subtitle))
 
         Spacer(Modifier.height(16.dp))
 
@@ -99,7 +130,7 @@ fun SettingsScreen() {
 
         Spacer(Modifier.height(28.dp))
 
-        SectionHeader(title = "Données", subtitle = "Exportez l'ensemble de vos écritures au format CSV, exploitable dans Excel ou Google Sheets.")
+        SectionHeader(title = stringResource(R.string.settings_data), subtitle = stringResource(R.string.settings_data_subtitle))
 
         Spacer(Modifier.height(16.dp))
 
@@ -116,8 +147,12 @@ fun SettingsScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "Exporter toutes les écritures (CSV)", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
-                    Text(text = "${AppRepository.entries.size} écriture(s) seront incluses", fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
+                    Text(text = stringResource(R.string.settings_export_csv), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
+                    Text(
+                        text = stringResource(R.string.settings_export_csv_subtitle_format, AppRepository.entries.size),
+                        fontSize = 12.sp,
+                        color = CaeColors.OnSurfaceVariant
+                    )
                 }
                 Icon(imageVector = Icons.Filled.Download, contentDescription = null, tint = CaeColors.Primary)
             }
@@ -140,6 +175,29 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(content = content)
+    }
+}
+
+@Composable
+private fun LanguageRow(option: AppLanguage, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = Icons.Filled.Language, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(text = stringResource(option.titleResId), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
+        }
+        RadioButton(
+            selected = selected,
+            onClick = onSelect,
+            colors = RadioButtonDefaults.colors(selectedColor = CaeColors.Primary)
+        )
     }
 }
 
@@ -175,7 +233,7 @@ private fun CurrencyRow(option: Currency, selected: Boolean, onSelect: () -> Uni
         Column {
             Text(text = option.displayName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
             Text(
-                text = "Exemple : " + if (option.symbolAfter) "1 234 ${option.symbol}" else "${option.symbol}1,234",
+                text = stringResource(R.string.settings_currency_example_format, if (option.symbolAfter) "1 234 ${option.symbol}" else "${option.symbol}1,234"),
                 fontSize = 12.sp,
                 color = CaeColors.OnSurfaceVariant
             )
@@ -198,8 +256,8 @@ private fun CashOnHandRow() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = "Trésorerie disponible", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
-            Text(text = "Utilisée pour le calcul du runway", fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
+            Text(text = stringResource(R.string.settings_cash_label), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
+            Text(text = stringResource(R.string.settings_cash_helper), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
         }
         OutlinedTextField(
             value = cashText,

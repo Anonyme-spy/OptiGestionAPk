@@ -10,13 +10,18 @@ import java.util.UUID
  *  NAVIGATION
  * ============================================================ */
 
-/** The five bottom-nav / side-nav destinations shared by every screen. */
-enum class NavDestination(val route: String, val label: String) {
-    DASHBOARD("dashboard", "Dashboard"),
-    SHEETS("sheets", "Sheets"),
-    ANALYSIS("analysis", "Budget"),       // -> Budget vs Réalisé screen
-    COST_CENTERS("cost_centers", "Centres"), // -> Cost Centers screen
-    STATS("stats", "Rapports")            // -> Analytics & Reports screen
+/**
+ * The five bottom-nav / side-nav destinations shared by every screen.
+ * Labels are NOT stored here anymore — they come from [Strings] via
+ * [live.anonymespy.optigestion.navLabel] / [live.anonymespy.optigestion.topBarTitle]
+ * so the nav bar follows the selected [AppLanguage] instead of being frozen in French.
+ */
+enum class NavDestination(val route: String) {
+    DASHBOARD("dashboard"),
+    SHEETS("sheets"),
+    ANALYSIS("analysis"),       // -> Budget vs Réalisé screen
+    COST_CENTERS("cost_centers"), // -> Cost Centers screen
+    STATS("stats")               // -> Analytics & Reports screen
 }
 
 /* ============================================================
@@ -57,10 +62,10 @@ data class ActivityItem(
 
 enum class SheetCategoryIcon { CLOUD, CAMPAIGN, HANDSHAKE, DEVICES, FLIGHT, DOMAIN, GENERIC }
 
-enum class EntryStatus(val label: String) {
-    APPROVED("Approuvé"),
-    PENDING("En attente"),
-    REJECTED("Rejeté")
+enum class EntryStatus(val labelResId: Int) {
+    APPROVED(R.string.entry_status_approved),
+    PENDING(R.string.entry_status_pending),
+    REJECTED(R.string.entry_status_rejected)
 }
 
 /**
@@ -188,11 +193,11 @@ data class CashFlowPoint(
 )
 
 /** Reporting period presets on the Reports screen. */
-enum class PeriodFilter(val label: String) {
-    ALL("Tout"),
-    MONTH("Ce mois"),
-    QUARTER("Ce trimestre"),
-    YEAR("Cette année")
+enum class PeriodFilter(val labelResId: Int) {
+    ALL(R.string.period_all),
+    MONTH(R.string.period_month),
+    QUARTER(R.string.period_quarter),
+    YEAR(R.string.period_year)
 }
 
 /** Palette cycled through when there are more budget categories than base colors. */

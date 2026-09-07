@@ -1,3 +1,190 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default resource bundle == French, matching the app's current default
+  (AppLanguage.FRENCH). Screens not yet migrated to stringResource()
+  (Sheets, Budget vs Actual, Cost Centers, Reports) still hardcode French
+  inline — moving them here is the natural next step, same pattern.
+
     <string name="app_name">OptiGestion</string>
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Navigation — bottom nav / side rail labels -->
+    <string name="app_name">OptiGestion</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_sheets">Sheets</string>
+    <string name="nav_budget">Budget</string>
+    <string name="nav_cost_centers">Centres</string>
+    <string name="nav_reports">Rapports</string>
+
+    <!-- Navigation — top app bar titles per screen -->
+    <string name="top_bar_dashboard">CAE Analytics</string>
+    <string name="top_bar_sheets">Sheets</string>
+    <string name="top_bar_budget">Budget vs Réalisé</string>
+    <string name="top_bar_cost_centers">Centres de Coût</string>
+    <string name="top_bar_reports">Rapports</string>
+    <string name="top_bar_settings">Paramètres</string>
+
+    <!-- Navigation — overflow menu + reset dialog -->
+    <string name="menu_settings">Paramètres</string>
+    <string name="menu_reset">Réinitialiser les données</string>
+    <string name="reset_dialog_title">Réinitialiser les données\u00A0?</string>
+    <string name="reset_dialog_text">Toutes vos écritures, budgets et centres de coût seront supprimés. Vous pourrez recharger le modèle d\'exemple ou repartir de zéro.</string>
+    <string name="reset_confirm">Réinitialiser</string>
+    <string name="reset_cancel">Annuler</string>
+    <string name="content_desc_back">Retour</string>
+
+    <!-- Entry status -->
+    <string name="entry_status_approved">Approuvé</string>
+    <string name="entry_status_pending">En attente</string>
+    <string name="entry_status_rejected">Rejeté</string>
+
+    <!-- Period filters -->
+    <string name="period_all">Tout</string>
+    <string name="period_month">Ce mois</string>
+    <string name="period_quarter">Ce trimestre</string>
+    <string name="period_year">Cette année</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Bienvenue dans OptiGestion</string>
+    <string name="onboarding_welcome_subtitle">Comment voulez-vous démarrer votre comptabilité analytique ?</string>
+    <string name="onboarding_start_empty_title">Commencer vide</string>
+    <string name="onboarding_start_empty_desc">Aucune donnée pré-remplie — vous saisissez vos propres écritures, centres de coût et budgets.</string>
+    <string name="onboarding_load_template_title">Charger un modèle d\'exemple</string>
+    <string name="onboarding_load_template_desc">Pré-remplit l\'app avec des écritures et budgets fictifs, pour explorer les écrans avant de saisir vos vraies données.</string>
+    <string name="onboarding_recommended">Recommandé</string>
+    <string name="onboarding_footer">Vous pourrez réinitialiser et refaire ce choix à tout moment depuis le menu.</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_appearance_subtitle">Choisissez le thème de couleurs de l\'app.</string>
+    <string name="settings_currency">Devise</string>
+    <string name="settings_currency_subtitle">Utilisée pour tous les montants affichés dans l\'app.</string>
+    <string name="settings_cash">Trésorerie</string>
+    <string name="settings_cash_subtitle">Utilisée pour calculer votre autonomie financière (runway) sur le Dashboard et les Rapports.</string>
+    <string name="settings_cash_label">Trésorerie disponible</string>
+    <string name="settings_cash_helper">Utilisée pour le calcul du runway</string>
+    <string name="settings_data">Données</string>
+    <string name="settings_data_subtitle">Exportez l\'ensemble de vos écritures au format CSV, exploitable dans Excel ou Google Sheets.</string>
+    <string name="settings_export_csv">Exporter toutes les écritures (CSV)</string>
+    <string name="settings_export_csv_subtitle_format">%1$d écriture(s) seront incluses</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_subtitle">Langue d\'affichage de l\'application.</string>
+
+    <!-- Language selection options -->
+    <string name="lang_system">Système</string>
+    <string name="lang_french">Français</string>
+    <string name="lang_english">English</string>
+
+    <!-- Currency example format -->
+    <string name="settings_currency_example_format">Exemple : %1$s</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Vue d\'ensemble</string>
+    <string name="dashboard_empty_title">Votre tableau de bord est vide</string>
+    <string name="dashboard_empty_body">Ajoutez vos premières écritures dans l\'onglet Sheets pour voir vos indicateurs, vos coûts par centre et votre activité récente.</string>
+    <string name="quick_action_entries">Écritures</string>
+
+    <!-- Stats / Reports -->
+    <string name="stats_title">Rapports &amp; Analytique</string>
+    <string name="quick_action_budget">Budget</string>
+    <string name="quick_action_reports">Rapports</string>
+    <string name="alert_banner_title_format">%1$d catégorie(s) budgétaire(s) à surveiller</string>
+
+    <!-- Sheets screen -->
+    <string name="toast_import_excel">Import Excel — bientôt disponible</string>
+    <string name="add_entry">Ajouter une écriture</string>
+    <string name="new_entry_title">Nouvelle écriture</string>
+    <string name="edit_entry_title">Modifier l\'écriture</string>
+    <string name="empty_sheets_filtered">Aucune écriture ne correspond à ce filtre</string>
+    <string name="empty_sheets_none">Aucune écriture pour le moment</string>
+    <string name="empty_sheets_body">Ajoutez votre première écriture pour commencer à alimenter le tableau de bord.</string>
+    <string name="search_placeholder">Rechercher une catégorie ou un centre de coût…</string>
+
+    <!-- Sheets / Controls -->
+    <string name="filter_label">Filtrer</string>
+    <string name="filter_all">Toutes</string>
+    <string name="control_sort">Trier</string>
+    <string name="control_import_excel">Importer Excel</string>
+
+    <!-- Table columns -->
+    <string name="sheet_col_category">Catégorie</string>
+    <string name="sheet_col_amount">Montant</string>
+    <string name="sheet_col_cost_center">Centre de Coût</string>
+    <string name="sheet_col_status">Statut</string>
+
+    <!-- Entry form labels -->
+    <string name="form_label_category">Catégorie</string>
+    <string name="form_label_amount">Montant</string>
+    <string name="form_label_cost_center">Centre de coût</string>
+    <string name="form_label_cost_center_example">Centre de coût (ex: IT-01)</string>
+    <string name="form_costcenter_tip">Astuce : créez des centres de coût dans l\'onglet Centres pour choisir dans une liste.</string>
+    <string name="form_type_label">Type :</string>
+    <string name="filter_expense">Dépense</string>
+    <string name="filter_income">Recette</string>
+    <string name="form_label_status">Statut</string>
+    <string name="form_label_icon">Icône</string>
+
+    <!-- Common actions -->
+    <string name="save">Enregistrer</string>
+    <string name="delete">Supprimer</string>
+    <string name="cancel">Annuler</string>
+    <string name="clear">Effacer</string>
+
+    <!-- Reports / Stats -->
+    <string name="report_export_success">Rapport exporté avec succès</string>
+    <string name="report_export_failure">Échec de l\'export</string>
+    <string name="stats_subtitle">Vue financière complète, période par période.</string>
+    <string name="export_report_csv">Exporter le Rapport (CSV)</string>
+    <string name="stats_revenue_label">Recettes</string>
+    <string name="stats_expense_label">Dépenses</string>
+    <string name="stats_net_label">Net</string>
+
+    <!-- Additional KPIs for Stats -->
+    <string name="kpi_burn_rate">BURN RATE</string>
+    <string name="kpi_runway">TRÉSORERIE (RUNWAY)</string>
+    <string name="kpi_growth">CROISSANCE</string>
+    <string name="kpi_net_margin">MARGE NETTE</string>
+    <string name="kpi_revenue">RECETTES TOTALES</string>
+    <string name="kpi_costs">COÛTS TOTAUX</string>
+    <string name="status_positive">Positive</string>
+    <string name="status_negative">Négative</string>
+    <string name="status_critical">Critique</string>
+    <string name="status_stable">Stable</string>
+    <string name="entries_count_format">%1$d écriture(s)</string>
+    <string name="cost_center_section_title">Coûts par Centre</string>
+    <string name="cost_center_empty">Aucune dépense enregistrée pour l\'instant.</string>
+
+    <!-- Cost centers screen -->
+    <string name="cost_centers_title">Centres de Coût</string>
+    <string name="cost_centers_subtitle">Suivi du budget par département, dérivé de vos écritures Sheets.</string>
+    <string name="cost_centers_distribution_title">Répartition par Département</string>
+    <string name="add_cost_center">Ajouter un centre de coût</string>
+    <string name="new_cost_center_title">Nouveau centre de coût</string>
+    <string name="edit_cost_center_title">Modifier le centre de coût</string>
+    <string name="empty_cost_centers_title">Aucun centre de coût</string>
+    <string name="empty_cost_centers_body">Créez vos départements (IT, Marketing, Direction...) avec un code et un budget mensuel. Vos écritures Sheets s\'y rattacheront automatiquement.</string>
+    <string name="cost_center_footnote_percent_format">%1$d%% du budget</string>
+    <string name="cost_center_footnote_none">Pas de budget défini</string>
+    <string name="form_label_cost_center_code">Code (ex: IT-01)</string>
+    <string name="form_label_cost_center_name">Nom du département</string>
+    <string name="form_label_monthly_budget">Budget mensuel (0 = centre de recette)</string>
+    <string name="activity_section_title">Activité Récente</string>
+    <string name="activity_empty">Rien à afficher pour l\'instant.</string>
+    <string name="months_suffix">mois</string>
+
+    <!-- Budget vs Actual -->
+    <string name="budget_header_title">Budget vs Réalisé</string>
+    <string name="budget_header_subtitle_format">Analyse des écarts pour %1$s</string>
+    <string name="empty_budget_title">Aucune catégorie budgétaire</string>
+    <string name="empty_budget_body">Créez vos catégories (main-d\'œuvre, matériaux, frais généraux...) avec leur budget prévu pour suivre l\'écart avec le réalisé.</string>
+    <string name="add_category">Ajouter une catégorie</string>
+    <string name="new_budget_category_title">Nouvelle catégorie budgétaire</string>
+    <string name="budget_overview_label">VUE D\'ENSEMBLE BUDGET</string>
+    <string name="budget_planned_label">Budget Prévu</string>
+    <string name="budget_actuals_label">Dépenses Réelles</string>
+    <string name="budget_total_variance_label">Écart Total</string>
+    <string name="budget_under_text">Sous le budget prévu. Performance positive.</string>
+    <string name="budget_over_text">Dépassement du budget prévu.</string>
+    <string name="form_label_name">Nom</string>
+    <string name="infinite_symbol">∞</string>
 </resources>

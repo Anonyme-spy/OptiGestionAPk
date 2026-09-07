@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -86,9 +87,9 @@ fun BudgetVsActualScreen() {
 @Composable
 private fun HeaderRow(periodLabel: String) {
     Column {
-        Text(text = "Budget vs Réalisé", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        Text(text = stringResource(R.string.budget_header_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
         Text(
-            text = "Analyse des écarts pour $periodLabel",
+            text = stringResource(R.string.budget_header_subtitle_format, periodLabel),
             fontSize = 14.sp,
             color = CaeColors.OnSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
@@ -111,10 +112,10 @@ private fun EmptyBudgetState(onAddCategory: () -> Unit) {
         ) {
             Icon(imageVector = Icons.Filled.Savings, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(40.dp))
             Spacer(Modifier.height(12.dp))
-            Text(text = "Aucune catégorie budgétaire", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
+            Text(text = stringResource(R.string.empty_budget_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Créez vos catégories (main-d'œuvre, matériaux, frais généraux...) avec leur budget prévu pour suivre l'écart avec le réalisé.",
+                text = stringResource(R.string.empty_budget_body),
                 fontSize = 13.sp,
                 color = CaeColors.OnSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -123,7 +124,7 @@ private fun EmptyBudgetState(onAddCategory: () -> Unit) {
             Button(onClick = onAddCategory, colors = ButtonDefaults.buttonColors(containerColor = CaeColors.Primary)) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Ajouter une catégorie")
+                Text(stringResource(R.string.add_category))
             }
         }
     }
@@ -145,17 +146,17 @@ private fun OverviewCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-            Text(text = "VUE D'ENSEMBLE BUDGET", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
+            Text(text = stringResource(R.string.budget_overview_label), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
 
             Spacer(Modifier.height(16.dp))
 
-            LabeledAmount(label = "Budget Prévu", amount = plannedBudgetTotal)
+            LabeledAmount(label = stringResource(R.string.budget_planned_label), amount = plannedBudgetTotal)
             Spacer(Modifier.height(12.dp))
-            LabeledAmount(label = "Dépenses Réelles", amount = totalActual)
+            LabeledAmount(label = stringResource(R.string.budget_actuals_label), amount = totalActual)
 
             HorizontalDivider(color = CaeColors.SurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))
 
-            Text(text = "Écart Total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
+            Text(text = stringResource(R.string.budget_total_variance_label), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = formatCurrency(abs(varianceAmount)), fontSize = 36.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
@@ -164,7 +165,7 @@ private fun OverviewCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (isUnderBudget) "Sous le budget prévu. Performance positive." else "Dépassement du budget prévu.",
+                text = if (isUnderBudget) stringResource(R.string.budget_under_text) else stringResource(R.string.budget_over_text),
                 fontSize = 12.sp,
                 color = CaeColors.OnSurfaceVariant
             )
@@ -218,7 +219,7 @@ private fun CategoryBreakdownCard(
             ) {
                 Text(text = "RÉPARTITION PAR CATÉGORIE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
                 IconButton(onClick = onAddCategory, modifier = Modifier.size(28.dp)) {
-                    Icon(imageVector = Icons.Filled.AddCircle, contentDescription = "Ajouter une catégorie", tint = CaeColors.Primary)
+                    Icon(imageVector = Icons.Filled.AddCircle, contentDescription = stringResource(R.string.add_category), tint = CaeColors.Primary)
                 }
             }
 
@@ -318,14 +319,14 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCate
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nouvelle catégorie budgétaire") },
+        title = { Text(stringResource(R.string.new_budget_category_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nom") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.form_label_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
                     value = budgetText,
                     onValueChange = { budgetText = it.filter { c -> c.isDigit() } },
-                    label = { Text("Budget prévu") },
+                    label = { Text(stringResource(R.string.budget_planned_label)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -335,7 +336,7 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCate
                         value = icon.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Icône") },
+                        label = { Text(stringResource(R.string.form_label_icon)) },
                         trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -356,8 +357,8 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCate
             }
         },
         confirmButton = {
-            TextButton(enabled = isValid, onClick = { onSave(name.trim(), icon, budgetText.toDoubleOrNull() ?: 0.0) }) { Text("Enregistrer") }
+            TextButton(enabled = isValid, onClick = { onSave(name.trim(), icon, budgetText.toDoubleOrNull() ?: 0.0) }) { Text(stringResource(R.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }

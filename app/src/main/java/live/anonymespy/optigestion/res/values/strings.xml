@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default resource bundle == French, matching the app's current default
+  (AppLanguage.FRENCH). Screens not yet migrated to stringResource()
+  (Sheets, Budget vs Actual, Cost Centers, Reports) still hardcode French
+  inline — moving them here is the natural next step, same pattern.
+-->
+<resources>
+    <!-- Navigation — bottom nav / side rail labels -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_sheets">Sheets</string>
+    <string name="nav_budget">Budget</string>
+    <string name="nav_cost_centers">Centres</string>
+    <string name="nav_reports">Rapports</string>
+
+    <!-- Navigation — top app bar titles per screen -->
+    <string name="top_bar_dashboard">CAE Analytics</string>
+    <string name="top_bar_sheets">Sheets</string>
+    <string name="top_bar_budget">Budget vs Réalisé</string>
+    <string name="top_bar_cost_centers">Centres de Coût</string>
+    <string name="top_bar_reports">Rapports</string>
+    <string name="top_bar_settings">Paramètres</string>
+
+    <!-- Navigation — overflow menu + reset dialog -->
+    <string name="menu_settings">Paramètres</string>
+    <string name="menu_reset">Réinitialiser les données</string>
+    <string name="reset_dialog_title">Réinitialiser les données\u00A0?</string>
+    <string name="reset_dialog_text">Toutes vos écritures, budgets et centres de coût seront supprimés. Vous pourrez recharger le modèle d\'exemple ou repartir de zéro.</string>
+    <string name="reset_confirm">Réinitialiser</string>
+    <string name="reset_cancel">Annuler</string>
+    <string name="content_desc_back">Retour</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_appearance_subtitle">Choisissez le thème de couleurs de l\'app.</string>
+    <string name="settings_currency">Devise</string>
+    <string name="settings_currency_subtitle">Utilisée pour tous les montants affichés dans l\'app.</string>
+    <string name="settings_cash">Trésorerie</string>
+    <string name="settings_cash_subtitle">Utilisée pour calculer votre autonomie financière (runway) sur le Dashboard et les Rapports.</string>
+    <string name="settings_cash_label">Trésorerie disponible</string>
+    <string name="settings_cash_helper">Utilisée pour le calcul du runway</string>
+    <string name="settings_data">Données</string>
+    <string name="settings_data_subtitle">Exportez l\'ensemble de vos écritures au format CSV, exploitable dans Excel ou Google Sheets.</string>
+    <string name="settings_export_csv">Exporter toutes les écritures (CSV)</string>
+    <string name="settings_export_csv_subtitle_format">%1$d écriture(s) seront incluses</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_subtitle">Langue d\'affichage de l\'application.</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Vue d\'ensemble</string>
+    <string name="dashboard_empty_title">Votre tableau de bord est vide</string>
+    <string name="dashboard_empty_body">Ajoutez vos premières écritures dans l\'onglet Sheets pour voir vos indicateurs, vos coûts par centre et votre activité récente.</string>
+    <string name="quick_action_entries">Écritures</string>
+    <string name="quick_action_budget">Budget</string>
+    <string name="quick_action_reports">Rapports</string>
+    <string name="alert_banner_title_format">%1$d catégorie(s) budgétaire(s) à surveiller</string>
+    <string name="kpi_net_margin">MARGE NETTE</string>
+    <string name="kpi_revenue">RECETTES TOTALES</string>
+    <string name="kpi_costs">COÛTS TOTAUX</string>
+    <string name="kpi_runway">TRÉSORERIE (RUNWAY)</string>
+    <string name="status_positive">Positive</string>
+    <string name="status_negative">Négative</string>
+    <string name="status_critical">Critique</string>
+    <string name="status_stable">Stable</string>
+    <string name="entries_count_format">%1$d écriture(s)</string>
+    <string name="cost_center_section_title">Coûts par Centre</string>
+    <string name="cost_center_empty">Aucune dépense enregistrée pour l\'instant.</string>
+    <string name="activity_section_title">Activité Récente</string>
+    <string name="activity_empty">Rien à afficher pour l\'instant.</string>
+    <string name="months_suffix">mois</string>
+    <string name="infinite_symbol">∞</string>
+</resources>

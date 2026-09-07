@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">OptiGestion</string>
+    <!-- Navigation — bottom nav / side rail labels -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_sheets">Sheets</string>
+    <string name="nav_budget">Budget</string>
+    <string name="nav_cost_centers">Centers</string>
+    <string name="nav_reports">Reports</string>
+
+    <!-- Navigation — top app bar titles per screen -->
+    <string name="top_bar_dashboard">CAE Analytics</string>
+    <string name="top_bar_sheets">Sheets</string>
+    <string name="top_bar_budget">Budget vs Actual</string>
+    <string name="top_bar_cost_centers">Cost Centers</string>
+    <string name="top_bar_reports">Reports</string>
+    <string name="top_bar_settings">Settings</string>
+
+    <!-- Navigation — overflow menu + reset dialog -->
+    <string name="menu_settings">Settings</string>
+    <string name="menu_reset">Reset data</string>
+    <string name="reset_dialog_title">Reset all data?</string>
+    <string name="reset_dialog_text">All your entries, budgets and cost centers will be deleted. You\'ll be able to reload the sample template or start from scratch.</string>
+    <string name="reset_confirm">Reset</string>
+    <string name="reset_cancel">Cancel</string>
+    <string name="content_desc_back">Back</string>
+
+    <!-- Entry status -->
+    <string name="entry_status_approved">Approved</string>
+    <string name="entry_status_pending">Pending</string>
+    <string name="entry_status_rejected">Rejected</string>
+
+    <!-- Period filters -->
+    <string name="period_all">All</string>
+    <string name="period_month">This month</string>
+    <string name="period_quarter">This quarter</string>
+    <string name="period_year">This year</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to OptiGestion</string>
+    <string name="onboarding_welcome_subtitle">How would you like to start your managerial accounting?</string>
+    <string name="onboarding_start_empty_title">Start empty</string>
+    <string name="onboarding_start_empty_desc">No pre-filled data — you enter your own entries, cost centers and budgets.</string>
+    <string name="onboarding_load_template_title">Load a sample template</string>
+    <string name="onboarding_load_template_desc">Pre-fills the app with sample entries and budgets so you can explore screens before entering your real data.</string>
+    <string name="onboarding_recommended">Recommended</string>
+    <string name="onboarding_footer">You can reset and redo this choice anytime from the menu.</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_subtitle">Choose the app\'s color theme.</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_currency_subtitle">Used for every amount shown in the app.</string>
+    <string name="settings_cash">Cash</string>
+    <string name="settings_cash_subtitle">Used to calculate your cash runway on the Dashboard and Reports.</string>
+    <string name="settings_cash_label">Cash on hand</string>
+    <string name="settings_cash_helper">Used for the runway calculation</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_subtitle">Export all your entries as CSV, ready for Excel or Google Sheets.</string>
+    <string name="settings_export_csv">Export all entries (CSV)</string>
+    <string name="settings_export_csv_subtitle_format">%1$d entries will be included</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_subtitle">Display language for the app.</string>
+
+    <!-- Language selection options -->
+    <string name="lang_system">System</string>
+    <string name="lang_french">Français</string>
+    <string name="lang_english">English</string>
+
+    <!-- Currency example format -->
+    <string name="settings_currency_example_format">Example: %1$s</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Overview</string>
+    <string name="dashboard_empty_title">Your dashboard is empty</string>
+    <string name="dashboard_empty_body">Add your first entries in the Sheets tab to see your KPIs, spend by cost center and recent activity.</string>
+    <string name="quick_action_entries">Entries</string>
+
+    <!-- Stats / Reports -->
+    <string name="stats_title">Reports &amp; Analytics</string>
+    <string name="quick_action_budget">Budget</string>
+    <string name="quick_action_reports">Reports</string>
+    <string name="alert_banner_title_format">%1$d budget categories need attention</string>
+
+    <!-- Sheets screen -->
+    <string name="toast_import_excel">Import Excel — coming soon</string>
+    <string name="add_entry">Add entry</string>
+    <string name="new_entry_title">New entry</string>
+    <string name="edit_entry_title">Edit entry</string>
+    <string name="empty_sheets_filtered">No entries match this filter</string>
+    <string name="empty_sheets_none">No entries yet</string>
+    <string name="empty_sheets_body">Add your first entry to start powering the dashboard.</string>
+    <string name="search_placeholder">Search a category or cost center…</string>
+
+    <!-- Sheets / Controls -->
+    <string name="filter_label">Filter</string>
+    <string name="filter_all">All</string>
+    <string name="control_sort">Sort</string>
+    <string name="control_import_excel">Import Excel</string>
+
+    <!-- Table columns -->
+    <string name="sheet_col_category">Category</string>
+    <string name="sheet_col_amount">Amount</string>
+    <string name="sheet_col_cost_center">Cost center</string>
+    <string name="sheet_col_status">Status</string>
+
+    <!-- Entry form labels -->
+    <string name="form_label_category">Category</string>
+    <string name="form_label_amount">Amount</string>
+    <string name="form_label_cost_center">Cost center</string>
+    <string name="form_label_cost_center_example">Cost center (eg: IT-01)</string>
+    <string name="form_costcenter_tip">Tip: create cost centers on the Cost Centers tab to pick from a list.</string>
+    <string name="form_type_label">Type:</string>
+    <string name="filter_expense">Expense</string>
+    <string name="filter_income">Income</string>
+    <string name="form_label_status">Status</string>
+    <string name="form_label_icon">Icon</string>
+
+    <!-- Common actions -->
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
+
+    <!-- Reports / Stats -->
+    <string name="report_export_success">Report exported</string>
+    <string name="report_export_failure">Export failed</string>
+    <string name="stats_subtitle">Full financial view, period by period.</string>
+    <string name="export_report_csv">Export Report (CSV)</string>
+    <string name="stats_revenue_label">Revenue</string>
+    <string name="stats_expense_label">Expense</string>
+    <string name="stats_net_label">Net</string>
+
+    <!-- Additional KPIs for Stats -->
+    <string name="kpi_burn_rate">BURN RATE</string>
+    <string name="kpi_runway">CASH RUNWAY</string>
+    <string name="kpi_growth">GROWTH</string>
+    <string name="kpi_net_margin">NET MARGIN</string>
+    <string name="kpi_revenue">TOTAL REVENUE</string>
+    <string name="kpi_costs">TOTAL COSTS</string>
+    <string name="status_positive">Positive</string>
+    <string name="status_negative">Negative</string>
+    <string name="status_critical">Critical</string>
+    <string name="status_stable">Stable</string>
+    <string name="entries_count_format">%1$d entries</string>
+    <string name="cost_center_section_title">Cost by Center</string>
+    <string name="cost_center_empty">No spend recorded yet.</string>
+    <string name="activity_section_title">Recent Activity</string>
+    <string name="activity_empty">Nothing to show yet.</string>
+    <string name="months_suffix">mo</string>
+
+    <!-- Budget vs Actual -->
+    <string name="budget_header_title">Budget vs Actual</string>
+    <string name="budget_header_subtitle_format">Analysis for %1$s</string>
+    <string name="empty_budget_title">No budget categories</string>
+    <string name="empty_budget_body">Create categories (labour, materials, overhead...) with a planned budget to track variance vs actual.</string>
+    <string name="add_category">Add category</string>
+    <string name="new_budget_category_title">New budget category</string>
+    <string name="budget_overview_label">BUDGET OVERVIEW</string>
+    <string name="budget_planned_label">Planned budget</string>
+    <string name="budget_actuals_label">Actual spend</string>
+    <string name="budget_total_variance_label">Total variance</string>
+    <string name="budget_under_text">Under planned budget. Positive outcome.</string>
+    <string name="budget_over_text">Over planned budget.</string>
+    <string name="form_label_name">Name</string>
+    <string name="infinite_symbol">∞</string>
+
+    <!-- Cost centers screen -->
+    <string name="cost_centers_title">Cost Centers</string>
+    <string name="cost_centers_subtitle">Track budgets per department, derived from your Sheets entries.</string>
+    <string name="cost_centers_distribution_title">Distribution by Department</string>
+    <string name="add_cost_center">Add cost center</string>
+    <string name="new_cost_center_title">New cost center</string>
+    <string name="edit_cost_center_title">Edit cost center</string>
+    <string name="empty_cost_centers_title">No cost centers</string>
+    <string name="empty_cost_centers_body">Create departments (IT, Marketing, Exec...) with a code and monthly budget. Your Sheets entries will attach automatically.</string>
+    <string name="cost_center_footnote_percent_format">%1$d%% of budget</string>
+    <string name="cost_center_footnote_none">No budget defined</string>
+    <string name="form_label_cost_center_code">Code (eg: IT-01)</string>
+    <string name="form_label_cost_center_name">Department name</string>
+    <string name="form_label_monthly_budget">Monthly budget (0 = revenue center)</string>
+</resources>

@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import live.anonymespy.optigestion.ui.theme.CaeColors
@@ -61,9 +62,9 @@ fun StatsScreen() {
             context.contentResolver.openOutputStream(uri)?.use { out ->
                 out.write(AppRepository.exportCsv().toByteArray())
             }
-            Toast.makeText(context, "Rapport exporté avec succès", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.report_export_success), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(context, "Échec de l'export", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.report_export_failure), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -73,13 +74,8 @@ fun StatsScreen() {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        Text(text = "Rapports & Analytique", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
-        Text(
-            text = "Vue financière complète, période par période.",
-            fontSize = 13.sp,
-            color = CaeColors.OnSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-        )
+        Text(text = stringResource(R.string.stats_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        Text(text = stringResource(R.string.stats_subtitle), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
 
         PeriodSelectorRow(selected = periodFilter, onSelect = { periodFilter = it })
 
@@ -125,7 +121,7 @@ fun StatsScreen() {
         ) {
             Icon(imageVector = Icons.Filled.Download, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(text = "Exporter le Rapport (CSV)", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(text = stringResource(R.string.export_report_csv), fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -144,7 +140,7 @@ private fun PeriodSelectorRow(selected: PeriodFilter, onSelect: (PeriodFilter) -
             FilterChip(
                 selected = selected == filter,
                 onClick = { onSelect(filter) },
-                label = { Text(filter.label) },
+            label = { Text(stringResource(filter.labelResId)) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = CaeColors.PrimaryContainer,
                     selectedLabelColor = CaeColors.OnPrimaryContainer
@@ -164,11 +160,11 @@ private fun KpiStripSection() {
     val growth = AppRepository.revenueGrowthPercent()
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        MetricTile("MARGE", if (margin != null) "${formatPercent(margin)}%" else "—", modifier = Modifier.weight(1f))
-        MetricTile("BURN RATE", formatCurrencyCompact(burn), modifier = Modifier.weight(1f))
-        MetricTile("RUNWAY", if (runway != null) "${formatMonths(runway)} mois" else "∞", modifier = Modifier.weight(1f))
+        MetricTile(stringResource(R.string.kpi_net_margin), if (margin != null) "${formatPercent(margin)}%" else "—", modifier = Modifier.weight(1f))
+        MetricTile(stringResource(R.string.kpi_burn_rate), formatCurrencyCompact(burn), modifier = Modifier.weight(1f))
+        MetricTile(stringResource(R.string.kpi_runway), if (runway != null) "${formatMonths(runway)} ${stringResource(R.string.months_suffix)}" else stringResource(R.string.infinite_symbol), modifier = Modifier.weight(1f))
         MetricTile(
-            "CROISSANCE",
+            stringResource(R.string.kpi_growth),
             if (growth != null) "${if (growth >= 0) "+" else ""}${formatPercent(growth)}%" else "—",
             modifier = Modifier.weight(1f)
         )
@@ -205,7 +201,7 @@ private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter) 
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "RÉSUMÉ — ${filter.label.uppercase()}",
+                text = "RÉSUMÉ — ${stringResource(filter.labelResId).uppercase()}",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -214,15 +210,15 @@ private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter) 
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("Recettes", fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
+                    Text(stringResource(R.string.stats_revenue_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
                     Text(formatCurrencyCompact(income), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnTertiaryContainer)
                 }
                 Column {
-                    Text("Dépenses", fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
+                    Text(stringResource(R.string.stats_expense_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
                     Text(formatCurrencyCompact(expense), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Error)
                 }
                 Column {
-                    Text("Net", fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
+                    Text(stringResource(R.string.stats_net_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
                     Text(formatCurrencyCompact(income - expense), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
                 }
             }
@@ -294,8 +290,8 @@ private fun CashFlowSection(data: List<CashFlowPoint>) {
                 Spacer(Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LegendDot(color = CaeColors.OnTertiaryContainer, label = "Recettes")
-                    LegendDot(color = CaeColors.Error, label = "Dépenses")
+                    LegendDot(color = CaeColors.OnTertiaryContainer, label = stringResource(R.string.stats_revenue_label))
+                    LegendDot(color = CaeColors.Error, label = stringResource(R.string.stats_expense_label))
                 }
             }
         }

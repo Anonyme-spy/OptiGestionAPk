@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation — bottom nav / side rail labels -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_sheets">Sheets</string>
+    <string name="nav_budget">Budget</string>
+    <string name="nav_cost_centers">Centers</string>
+    <string name="nav_reports">Reports</string>
+
+    <!-- Navigation — top app bar titles per screen -->
+    <string name="top_bar_dashboard">CAE Analytics</string>
+    <string name="top_bar_sheets">Sheets</string>
+    <string name="top_bar_budget">Budget vs Actual</string>
+    <string name="top_bar_cost_centers">Cost Centers</string>
+    <string name="top_bar_reports">Reports</string>
+    <string name="top_bar_settings">Settings</string>
+
+    <!-- Navigation — overflow menu + reset dialog -->
+    <string name="menu_settings">Settings</string>
+    <string name="menu_reset">Reset data</string>
+    <string name="reset_dialog_title">Reset all data?</string>
+    <string name="reset_dialog_text">All your entries, budgets and cost centers will be deleted. You\'ll be able to reload the sample template or start from scratch.</string>
+    <string name="reset_confirm">Reset</string>
+    <string name="reset_cancel">Cancel</string>
+    <string name="content_desc_back">Back</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_subtitle">Choose the app\'s color theme.</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_currency_subtitle">Used for every amount shown in the app.</string>
+    <string name="settings_cash">Cash</string>
+    <string name="settings_cash_subtitle">Used to calculate your cash runway on the Dashboard and Reports.</string>
+    <string name="settings_cash_label">Cash on hand</string>
+    <string name="settings_cash_helper">Used for the runway calculation</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_subtitle">Export all your entries as CSV, ready for Excel or Google Sheets.</string>
+    <string name="settings_export_csv">Export all entries (CSV)</string>
+    <string name="settings_export_csv_subtitle_format">%1$d entries will be included</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_subtitle">Display language for the app.</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Overview</string>
+    <string name="dashboard_empty_title">Your dashboard is empty</string>
+    <string name="dashboard_empty_body">Add your first entries in the Sheets tab to see your KPIs, spend by cost center and recent activity.</string>
+    <string name="quick_action_entries">Entries</string>
+    <string name="quick_action_budget">Budget</string>
+    <string name="quick_action_reports">Reports</string>
+    <string name="alert_banner_title_format">%1$d budget categories need attention</string>
+    <string name="kpi_net_margin">NET MARGIN</string>
+    <string name="kpi_revenue">TOTAL REVENUE</string>
+    <string name="kpi_costs">TOTAL COSTS</string>
+    <string name="kpi_runway">CASH RUNWAY</string>
+    <string name="status_positive">Positive</string>
+    <string name="status_negative">Negative</string>
+    <string name="status_critical">Critical</string>
+    <string name="status_stable">Stable</string>
+    <string name="entries_count_format">%1$d entries</string>
+    <string name="cost_center_section_title">Cost by Center</string>
+    <string name="cost_center_empty">No spend recorded yet.</string>
+    <string name="activity_section_title">Recent Activity</string>
+    <string name="activity_empty">Nothing to show yet.</string>
+    <string name="months_suffix">mo</string>
+    <string name="infinite_symbol">∞</string>
+</resources>
