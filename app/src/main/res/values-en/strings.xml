@@ -5,15 +5,21 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_sheets">Sheets</string>
     <string name="nav_budget">Budget</string>
+    <string name="nav_budget_simple">Goals</string>
     <string name="nav_cost_centers">Centers</string>
+    <string name="nav_cost_centers_simple">Projects</string>
     <string name="nav_reports">Reports</string>
+    <string name="nav_reports_simple">My Summary</string>
 
     <!-- Navigation — top app bar titles per screen -->
     <string name="top_bar_dashboard">CAE Analytics</string>
     <string name="top_bar_sheets">Sheets</string>
     <string name="top_bar_budget">Budget vs Actual</string>
+    <string name="top_bar_budget_simple">My Goals</string>
     <string name="top_bar_cost_centers">Cost Centers</string>
+    <string name="top_bar_cost_centers_simple">My Projects</string>
     <string name="top_bar_reports">Reports</string>
+    <string name="top_bar_reports_simple">My Summary</string>
     <string name="top_bar_settings">Settings</string>
 
     <!-- Navigation — overflow menu + reset dialog -->
@@ -39,6 +45,12 @@
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to OptiGestion</string>
     <string name="onboarding_welcome_subtitle">How would you like to start your managerial accounting?</string>
+    <string name="onboarding_mode_simple">Simple Mode</string>
+    <string name="onboarding_mode_simple_desc">Ideal for individuals or small activities. Simple terms, no accounting jargon.</string>
+    <string name="onboarding_mode_pro">Professional Mode</string>
+    <string name="onboarding_mode_pro_desc">Full analytic accounting with cost centers, budgets, and entry validation.</string>
+    <string name="onboarding_setup_title">Setup for %1$s mode</string>
+    <string name="onboarding_back">Back to mode selection</string>
     <string name="onboarding_start_empty_title">Start empty</string>
     <string name="onboarding_start_empty_desc">No pre-filled data — you enter your own entries, cost centers and budgets.</string>
     <string name="onboarding_load_template_title">Load a sample template</string>
@@ -78,6 +90,7 @@
 
     <!-- Stats / Reports -->
     <string name="stats_title">Reports &amp; Analytics</string>
+    <string name="stats_title_simple">My Reports</string>
     <string name="quick_action_budget">Budget</string>
     <string name="quick_action_reports">Reports</string>
     <string name="alert_banner_title_format">%1$d budget categories need attention</string>
@@ -99,22 +112,31 @@
     <string name="control_import_excel">Import Excel</string>
 
     <!-- Table columns -->
-    <string name="sheet_col_category">Category</string>
+    <string name="sheet_col_category">Description</string>
     <string name="sheet_col_amount">Amount</string>
     <string name="sheet_col_cost_center">Cost center</string>
+    <string name="sheet_col_cost_center_simple">Project</string>
     <string name="sheet_col_status">Status</string>
 
     <!-- Entry form labels -->
-    <string name="form_label_category">Category</string>
+    <string name="form_label_category">Description</string>
     <string name="form_label_amount">Amount</string>
     <string name="form_label_cost_center">Cost center</string>
+    <string name="form_label_cost_center_simple">Project / Tag</string>
     <string name="form_label_cost_center_example">Cost center (eg: IT-01)</string>
+    <string name="form_label_cost_center_example_simple">Project (eg: Holidays)</string>
     <string name="form_costcenter_tip">Tip: create cost centers on the Cost Centers tab to pick from a list.</string>
+    <string name="form_costcenter_tip_simple">Tip: group your expenses by project or tag.</string>
     <string name="form_type_label">Type:</string>
     <string name="filter_expense">Expense</string>
     <string name="filter_income">Income</string>
     <string name="form_label_status">Status</string>
     <string name="form_label_icon">Icon</string>
+    <string name="form_label_tax_rate">Tax Rate (%)</string>
+    <string name="form_label_is_ttc">Amount entered with tax</string>
+    <string name="form_label_ledger_account">Ledger account</string>
+    <string name="form_label_ledger_account_example">Account (e.g., 606)</string>
+    <string name="form_label_ledger_account_simple">Spending category</string>
 
     <!-- Common actions -->
     <string name="save">Save</string>
@@ -126,18 +148,39 @@
     <string name="report_export_success">Report exported</string>
     <string name="report_export_failure">Export failed</string>
     <string name="stats_subtitle">Full financial view, period by period.</string>
+    <string name="stats_subtitle_simple">Financial summary for the period.</string>
+    <string name="stats_kpi_net_margin_simple">NET BALANCE</string>
+    <string name="stats_cashflow_title">CASH FLOW (LAST 6 MONTHS)</string>
+    <string name="stats_cashflow_title_simple">INCOME VS EXPENSES</string>
+    <string name="stats_distribution_title">COST DISTRIBUTION</string>
+    <string name="stats_distribution_title_simple">SPENDING BREAKDOWN</string>
+    <string name="stats_trend_title">PROFITABILITY TREND</string>
+    <string name="stats_trend_title_simple">BALANCE TREND</string>
+    <string name="stats_ranking_title">TOP COST CENTERS</string>
+    <string name="stats_ranking_title_simple">SPENDING BY PROJECT</string>
+    <string name="stats_total_cost_label">Total Cost</string>
+    <string name="stats_total_cost_label_simple">Total Spent</string>
     <string name="export_report_csv">Export Report (CSV)</string>
     <string name="stats_revenue_label">Revenue</string>
     <string name="stats_expense_label">Expense</string>
     <string name="stats_net_label">Net</string>
+    <string name="stats_tax_label">Tax</string>
+    <string name="stats_ht_label">HT</string>
+    <string name="stats_ttc_label">TTC</string>
+    <string name="stats_pl_title">PROFIT &amp; LOSS (P&amp;L)</string>
 
     <!-- Additional KPIs for Stats -->
     <string name="kpi_burn_rate">BURN RATE</string>
-    <string name="kpi_runway">CASH RUNWAY</string>
+    <string name="kpi_burn_rate_simple">AVERAGE SPENDING</string>
+    <string name="kpi_runway">RUNWAY</string>
+    <string name="kpi_runway_simple">ESTIMATED SURVIVAL</string>
     <string name="kpi_growth">GROWTH</string>
     <string name="kpi_net_margin">NET MARGIN</string>
+    <string name="kpi_net_margin_simple">SAVINGS / BALANCE</string>
     <string name="kpi_revenue">TOTAL REVENUE</string>
+    <string name="kpi_revenue_simple">INCOME</string>
     <string name="kpi_costs">TOTAL COSTS</string>
+    <string name="kpi_costs_simple">EXPENSES</string>
     <string name="status_positive">Positive</string>
     <string name="status_negative">Negative</string>
     <string name="status_critical">Critical</string>
@@ -151,7 +194,9 @@
 
     <!-- Budget vs Actual -->
     <string name="budget_header_title">Budget vs Actual</string>
+    <string name="budget_header_title_simple">Budget Tracking</string>
     <string name="budget_header_subtitle_format">Analysis for %1$s</string>
+    <string name="budget_header_subtitle_format_simple">Your planned vs actual spending for %1$s</string>
     <string name="empty_budget_title">No budget categories</string>
     <string name="empty_budget_body">Create categories (labour, materials, overhead...) with a planned budget to track variance vs actual.</string>
     <string name="add_category">Add category</string>
@@ -167,16 +212,27 @@
 
     <!-- Cost centers screen -->
     <string name="cost_centers_title">Cost Centers</string>
+    <string name="cost_centers_title_simple">Projects</string>
     <string name="cost_centers_subtitle">Track budgets per department, derived from your Sheets entries.</string>
+    <string name="cost_centers_subtitle_simple">Track budgets per project or tag, derived from your entries.</string>
     <string name="cost_centers_distribution_title">Distribution by Department</string>
+    <string name="cost_centers_distribution_title_simple">Distribution by Project</string>
     <string name="add_cost_center">Add cost center</string>
+    <string name="add_cost_center_simple">Add project</string>
     <string name="new_cost_center_title">New cost center</string>
+    <string name="new_cost_center_title_simple">New project</string>
     <string name="edit_cost_center_title">Edit cost center</string>
+    <string name="edit_cost_center_title_simple">Edit project</string>
     <string name="empty_cost_centers_title">No cost centers</string>
+    <string name="empty_cost_centers_title_simple">No projects</string>
     <string name="empty_cost_centers_body">Create departments (IT, Marketing, Exec...) with a code and monthly budget. Your Sheets entries will attach automatically.</string>
+    <string name="empty_cost_centers_body_simple">Create projects or tags (Home, Holidays, Work...) with a monthly budget. Your entries will link automatically.</string>
     <string name="cost_center_footnote_percent_format">%1$d%% of budget</string>
     <string name="cost_center_footnote_none">No budget defined</string>
     <string name="form_label_cost_center_code">Code (eg: IT-01)</string>
+    <string name="form_label_cost_center_code_simple">Tag (eg: HOME)</string>
     <string name="form_label_cost_center_name">Department name</string>
+    <string name="form_label_cost_center_name_simple">Project name</string>
     <string name="form_label_monthly_budget">Monthly budget (0 = revenue center)</string>
+    <string name="form_label_monthly_budget_simple">Monthly budget (0 = unlimited)</string>
 </resources>

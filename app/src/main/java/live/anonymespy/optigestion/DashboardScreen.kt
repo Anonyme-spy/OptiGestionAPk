@@ -63,11 +63,11 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
                 Spacer(Modifier.height(16.dp))
             }
 
-            HeroMarginCard(netMargin = netMargin, revenue = revenue, costs = costs)
+            HeroMarginCard(netMargin = netMargin, revenue = revenue, costs = costs, appMode = AppRepository.appMode)
 
             Spacer(Modifier.height(12.dp))
 
-            SecondaryMetricsRow(revenue = revenue, costs = costs, runway = runway)
+            SecondaryMetricsRow(revenue = revenue, costs = costs, runway = runway, appMode = AppRepository.appMode)
 
             Spacer(Modifier.height(16.dp))
 
@@ -87,8 +87,9 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
 /* ---------------- Hero card ---------------- */
 
 @Composable
-private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double) {
+private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double, appMode: AppMode) {
     val isPositive = netMargin >= 0
+    val isPro = appMode == AppMode.PRO
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -102,7 +103,7 @@ private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double) {
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = stringResource(R.string.kpi_net_margin),
+                    text = stringResource(if (isPro) R.string.kpi_net_margin else R.string.kpi_net_margin_simple),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.6.sp,
@@ -120,8 +121,8 @@ private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double) {
             Spacer(Modifier.height(8.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                val revenueLabel = stringResource(R.string.kpi_revenue).lowercase().replaceFirstChar { it.uppercase() }
-                val costsLabel = stringResource(R.string.kpi_costs).lowercase().replaceFirstChar { it.uppercase() }
+                val revenueLabel = stringResource(if (isPro) R.string.kpi_revenue else R.string.kpi_revenue_simple).lowercase().replaceFirstChar { it.uppercase() }
+                val costsLabel = stringResource(if (isPro) R.string.kpi_costs else R.string.kpi_costs_simple).lowercase().replaceFirstChar { it.uppercase() }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(CaeColors.TertiaryFixedDim))
                     Spacer(Modifier.width(4.dp))
@@ -174,20 +175,21 @@ private fun HeroDeltaBadge(isPositive: Boolean, label: String) {
 /* ---------------- Secondary metrics row ---------------- */
 
 @Composable
-private fun SecondaryMetricsRow(revenue: Double, costs: Double, runway: Double?) {
+private fun SecondaryMetricsRow(revenue: Double, costs: Double, runway: Double?, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
         SecondaryMetricTile(
-            label = stringResource(R.string.kpi_revenue),
+            label = stringResource(if (isPro) R.string.kpi_revenue else R.string.kpi_revenue_simple),
             value = formatCurrencyCompact(revenue),
             modifier = Modifier.weight(1f)
         )
         SecondaryMetricTile(
-            label = stringResource(R.string.kpi_costs),
+            label = stringResource(if (isPro) R.string.kpi_costs else R.string.kpi_costs_simple),
             value = formatCurrencyCompact(costs),
             modifier = Modifier.weight(1f)
         )
         SecondaryMetricTile(
-            label = stringResource(R.string.kpi_runway),
+            label = stringResource(if (isPro) R.string.kpi_runway else R.string.kpi_runway_simple),
             value = if (runway != null) "${formatMonths(runway)} ${stringResource(R.string.months_suffix)}" else stringResource(R.string.infinite_symbol),
             valueColor = if (runway != null && runway < 3) CaeColors.Error else CaeColors.Primary,
             modifier = Modifier.weight(1f)
@@ -215,10 +217,11 @@ private fun SecondaryMetricTile(label: String, value: String, valueColor: androi
 
 @Composable
 private fun QuickActionsRow(onNavigate: (NavDestination) -> Unit) {
+    val isPro = AppRepository.appMode == AppMode.PRO
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         QuickActionChip(icon = Icons.Filled.TableChart, label = stringResource(R.string.quick_action_entries), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.SHEETS) }
-        QuickActionChip(icon = Icons.Filled.Savings, label = stringResource(R.string.quick_action_budget), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.ANALYSIS) }
-        QuickActionChip(icon = Icons.Filled.QueryStats, label = stringResource(R.string.quick_action_reports), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.STATS) }
+        QuickActionChip(icon = Icons.Filled.Savings, label = stringResource(if (isPro) R.string.quick_action_budget else R.string.nav_budget_simple), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.ANALYSIS) }
+        QuickActionChip(icon = Icons.Filled.QueryStats, label = stringResource(if (isPro) R.string.quick_action_reports else R.string.nav_reports_simple), modifier = Modifier.weight(1f)) { onNavigate(NavDestination.STATS) }
     }
 }
 

@@ -13,15 +13,21 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_sheets">Sheets</string>
     <string name="nav_budget">Budget</string>
+    <string name="nav_budget_simple">Objectifs</string>
     <string name="nav_cost_centers">Centres</string>
+    <string name="nav_cost_centers_simple">Projets</string>
     <string name="nav_reports">Rapports</string>
+    <string name="nav_reports_simple">Mon Bilan</string>
 
     <!-- Navigation — top app bar titles per screen -->
     <string name="top_bar_dashboard">CAE Analytics</string>
     <string name="top_bar_sheets">Sheets</string>
     <string name="top_bar_budget">Budget vs Réalisé</string>
+    <string name="top_bar_budget_simple">Mes Objectifs</string>
     <string name="top_bar_cost_centers">Centres de Coût</string>
+    <string name="top_bar_cost_centers_simple">Mes Projets</string>
     <string name="top_bar_reports">Rapports</string>
+    <string name="top_bar_reports_simple">Mon Bilan</string>
     <string name="top_bar_settings">Paramètres</string>
 
     <!-- Navigation — overflow menu + reset dialog -->
@@ -47,6 +53,12 @@
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Bienvenue dans OptiGestion</string>
     <string name="onboarding_welcome_subtitle">Comment voulez-vous démarrer votre comptabilité analytique ?</string>
+    <string name="onboarding_mode_simple">Mode Simplifié</string>
+    <string name="onboarding_mode_simple_desc">Idéal pour les particuliers ou petites activités. Termes simples, pas de jargon comptable.</string>
+    <string name="onboarding_mode_pro">Mode Professionnel</string>
+    <string name="onboarding_mode_pro_desc">Comptabilité analytique complète avec centres de coût, budgets et validation des écritures.</string>
+    <string name="onboarding_setup_title">Configuration du mode %1$s</string>
+    <string name="onboarding_back">Retour au choix du mode</string>
     <string name="onboarding_start_empty_title">Commencer vide</string>
     <string name="onboarding_start_empty_desc">Aucune donnée pré-remplie — vous saisissez vos propres écritures, centres de coût et budgets.</string>
     <string name="onboarding_load_template_title">Charger un modèle d\'exemple</string>
@@ -86,6 +98,7 @@
 
     <!-- Stats / Reports -->
     <string name="stats_title">Rapports &amp; Analytique</string>
+    <string name="stats_title_simple">Mes Rapports</string>
     <string name="quick_action_budget">Budget</string>
     <string name="quick_action_reports">Rapports</string>
     <string name="alert_banner_title_format">%1$d catégorie(s) budgétaire(s) à surveiller</string>
@@ -107,22 +120,31 @@
     <string name="control_import_excel">Importer Excel</string>
 
     <!-- Table columns -->
-    <string name="sheet_col_category">Catégorie</string>
+    <string name="sheet_col_category">Intitulé</string>
     <string name="sheet_col_amount">Montant</string>
-    <string name="sheet_col_cost_center">Centre de Coût</string>
+    <string name="sheet_col_cost_center">Centre</string>
+    <string name="sheet_col_cost_center_simple">Projet</string>
     <string name="sheet_col_status">Statut</string>
 
     <!-- Entry form labels -->
-    <string name="form_label_category">Catégorie</string>
+    <string name="form_label_category">Intitulé</string>
     <string name="form_label_amount">Montant</string>
     <string name="form_label_cost_center">Centre de coût</string>
+    <string name="form_label_cost_center_simple">Projet / Étiquette</string>
     <string name="form_label_cost_center_example">Centre de coût (ex: IT-01)</string>
+    <string name="form_label_cost_center_example_simple">Projet (ex: Vacances)</string>
     <string name="form_costcenter_tip">Astuce : créez des centres de coût dans l\'onglet Centres pour choisir dans une liste.</string>
+    <string name="form_costcenter_tip_simple">Astuce : regroupez vos dépenses par projet ou étiquette.</string>
     <string name="form_type_label">Type :</string>
     <string name="filter_expense">Dépense</string>
     <string name="filter_income">Recette</string>
     <string name="form_label_status">Statut</string>
     <string name="form_label_icon">Icône</string>
+    <string name="form_label_tax_rate">Taux de TVA (%)</string>
+    <string name="form_label_is_ttc">Montant saisi en TTC</string>
+    <string name="form_label_ledger_account">Compte comptable</string>
+    <string name="form_label_ledger_account_example">Compte (ex: 606)</string>
+    <string name="form_label_ledger_account_simple">Catégorie de dépense</string>
 
     <!-- Common actions -->
     <string name="save">Enregistrer</string>
@@ -134,18 +156,39 @@
     <string name="report_export_success">Rapport exporté avec succès</string>
     <string name="report_export_failure">Échec de l\'export</string>
     <string name="stats_subtitle">Vue financière complète, période par période.</string>
+    <string name="stats_subtitle_simple">Résumé de vos finances sur la période.</string>
+    <string name="stats_kpi_net_margin_simple">SOLDE NET</string>
+    <string name="stats_cashflow_title">FLUX DE TRÉSORERIE</string>
+    <string name="stats_cashflow_title_simple">REVENUS VS DÉPENSES</string>
+    <string name="stats_distribution_title">RÉPARTITION DES COÛTS</string>
+    <string name="stats_distribution_title_simple">RÉPARTITION DES DÉPENSES</string>
+    <string name="stats_trend_title">TENDANCE DE RENTABILITÉ</string>
+    <string name="stats_trend_title_simple">TENDANCE DU SOLDE</string>
+    <string name="stats_ranking_title">TOP CENTRES DE COÛT</string>
+    <string name="stats_ranking_title_simple">DÉPENSES PAR PROJET</string>
+    <string name="stats_total_cost_label">Coût Total</string>
+    <string name="stats_total_cost_label_simple">Total Dépensé</string>
     <string name="export_report_csv">Exporter le Rapport (CSV)</string>
     <string name="stats_revenue_label">Recettes</string>
     <string name="stats_expense_label">Dépenses</string>
     <string name="stats_net_label">Net</string>
+    <string name="stats_tax_label">TVA</string>
+    <string name="stats_ht_label">HT</string>
+    <string name="stats_ttc_label">TTC</string>
+    <string name="stats_pl_title">COMPTE DE RÉSULTAT (P&amp;L)</string>
 
     <!-- Additional KPIs for Stats -->
     <string name="kpi_burn_rate">BURN RATE</string>
-    <string name="kpi_runway">TRÉSORERIE (RUNWAY)</string>
+    <string name="kpi_burn_rate_simple">DÉPENSES MOYENNES</string>
+    <string name="kpi_runway">AUTONOMIE</string>
+    <string name="kpi_runway_simple">SURVIE ESTIMÉE</string>
     <string name="kpi_growth">CROISSANCE</string>
     <string name="kpi_net_margin">MARGE NETTE</string>
+    <string name="kpi_net_margin_simple">ÉPARGNE / SOLDE</string>
     <string name="kpi_revenue">RECETTES TOTALES</string>
+    <string name="kpi_revenue_simple">REVENUS</string>
     <string name="kpi_costs">COÛTS TOTAUX</string>
+    <string name="kpi_costs_simple">DÉPENSES</string>
     <string name="status_positive">Positive</string>
     <string name="status_negative">Négative</string>
     <string name="status_critical">Critique</string>
@@ -156,25 +199,38 @@
 
     <!-- Cost centers screen -->
     <string name="cost_centers_title">Centres de Coût</string>
+    <string name="cost_centers_title_simple">Projets</string>
     <string name="cost_centers_subtitle">Suivi du budget par département, dérivé de vos écritures Sheets.</string>
+    <string name="cost_centers_subtitle_simple">Suivi du budget par projet ou étiquette, dérivé de vos écritures.</string>
     <string name="cost_centers_distribution_title">Répartition par Département</string>
+    <string name="cost_centers_distribution_title_simple">Répartition par Projet</string>
     <string name="add_cost_center">Ajouter un centre de coût</string>
+    <string name="add_cost_center_simple">Ajouter un projet</string>
     <string name="new_cost_center_title">Nouveau centre de coût</string>
+    <string name="new_cost_center_title_simple">Nouveau projet</string>
     <string name="edit_cost_center_title">Modifier le centre de coût</string>
+    <string name="edit_cost_center_title_simple">Modifier le projet</string>
     <string name="empty_cost_centers_title">Aucun centre de coût</string>
+    <string name="empty_cost_centers_title_simple">Aucun projet</string>
     <string name="empty_cost_centers_body">Créez vos départements (IT, Marketing, Direction...) avec un code et un budget mensuel. Vos écritures Sheets s\'y rattacheront automatiquement.</string>
+    <string name="empty_cost_centers_body_simple">Créez vos projets ou étiquettes (Maison, Vacances, Travail...) avec un budget mensuel. Vos écritures s\'y rattacheront automatiquement.</string>
     <string name="cost_center_footnote_percent_format">%1$d%% du budget</string>
     <string name="cost_center_footnote_none">Pas de budget défini</string>
     <string name="form_label_cost_center_code">Code (ex: IT-01)</string>
+    <string name="form_label_cost_center_code_simple">Étiquette (ex: MAISON)</string>
     <string name="form_label_cost_center_name">Nom du département</string>
+    <string name="form_label_cost_center_name_simple">Nom du projet</string>
     <string name="form_label_monthly_budget">Budget mensuel (0 = centre de recette)</string>
+    <string name="form_label_monthly_budget_simple">Budget mensuel (0 = illimité)</string>
     <string name="activity_section_title">Activité Récente</string>
     <string name="activity_empty">Rien à afficher pour l\'instant.</string>
     <string name="months_suffix">mois</string>
 
     <!-- Budget vs Actual -->
     <string name="budget_header_title">Budget vs Réalisé</string>
+    <string name="budget_header_title_simple">Suivi du Budget</string>
     <string name="budget_header_subtitle_format">Analyse des écarts pour %1$s</string>
+    <string name="budget_header_subtitle_format_simple">Vos dépenses prévues vs réelles pour %1$s</string>
     <string name="empty_budget_title">Aucune catégorie budgétaire</string>
     <string name="empty_budget_body">Créez vos catégories (main-d\'œuvre, matériaux, frais généraux...) avec leur budget prévu pour suivre l\'écart avec le réalisé.</string>
     <string name="add_category">Ajouter une catégorie</string>

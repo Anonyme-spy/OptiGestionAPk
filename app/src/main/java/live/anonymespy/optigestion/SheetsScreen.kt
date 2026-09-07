@@ -73,7 +73,8 @@ fun SheetsScreen() {
                 onToggleFilterMenu = { showFilterMenu = !showFilterMenu },
                 onSelectFilter = { statusFilter = it; showFilterMenu = false },
                 onSort = { sortDescending = !sortDescending },
-                onImportExcel = { Toast.makeText(context, context.getString(R.string.toast_import_excel), Toast.LENGTH_SHORT).show() }
+                onImportExcel = { Toast.makeText(context, context.getString(R.string.toast_import_excel), Toast.LENGTH_SHORT).show() },
+                appMode = AppRepository.appMode
             )
 
             if (visibleEntries.isEmpty()) {
@@ -82,7 +83,7 @@ fun SheetsScreen() {
                     onAddEntry = { showAddDialog = true }
                 )
             } else {
-                SheetTable(entries = visibleEntries, onRowClick = { editingEntry = it })
+                SheetTable(entries = visibleEntries, onRowClick = { editingEntry = it }, appMode = AppRepository.appMode)
             }
 
             Text(
@@ -115,7 +116,8 @@ fun SheetsScreen() {
             initial = null,
             onDismiss = { showAddDialog = false },
             onSave = { entry -> AppRepository.addEntry(entry); showAddDialog = false },
-            onDelete = null
+            onDelete = null,
+            appMode = AppRepository.appMode
         )
     }
 
@@ -125,7 +127,8 @@ fun SheetsScreen() {
             initial = entry,
             onDismiss = { editingEntry = null },
             onSave = { updated -> AppRepository.updateEntry(updated); editingEntry = null },
-            onDelete = { AppRepository.deleteEntry(entry.id); editingEntry = null }
+            onDelete = { AppRepository.deleteEntry(entry.id); editingEntry = null },
+            appMode = AppRepository.appMode
         )
     }
 }
@@ -206,7 +209,8 @@ private fun ControlsBar(
     onToggleFilterMenu: () -> Unit,
     onSelectFilter: (EntryStatus?) -> Unit,
     onSort: () -> Unit,
-    onImportExcel: () -> Unit
+    onImportExcel: () -> Unit,
+    appMode: AppMode
 ) {
     Row(
         modifier = Modifier
@@ -216,16 +220,18 @@ private fun ControlsBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box {
-                ControlChip(
-                    icon = Icons.Filled.FilterList,
-                    label = activeFilter?.let { stringResource(it.labelResId) } ?: stringResource(R.string.filter_label),
-                    onClick = onToggleFilterMenu
-                )
-                DropdownMenu(expanded = showFilterMenu, onDismissRequest = onToggleFilterMenu) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = { onSelectFilter(null) })
-                    EntryStatus.entries.forEach { status ->
-                        DropdownMenuItem(text = { Text(stringResource(status.labelResId)) }, onClick = { onSelectFilter(status) })
+            if (appMode == AppMode.PRO) {
+                Box {
+                    ControlChip(
+                        icon = Icons.Filled.FilterList,
+                        label = activeFilter?.let { stringResource(it.labelResId) } ?: stringResource(R.string.filter_label),
+                        onClick = onToggleFilterMenu
+                    )
+                    DropdownMenu(expanded = showFilterMenu, onDismissRequest = onToggleFilterMenu) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = { onSelectFilter(null) })
+                        EntryStatus.entries.forEach { status ->
+                            DropdownMenuItem(text = { Text(stringResource(status.labelResId)) }, onClick = { onSelectFilter(status) })
+                        }
                     }
                 }
             }
@@ -260,21 +266,22 @@ private const val COL_COST_CENTER_WEIGHT = 1f
 private const val COL_STATUS_WEIGHT = 1f
 
 @Composable
-private fun SheetTable(entries: List<SheetEntry>, onRowClick: (SheetEntry) -> Unit) {
+private fun SheetTable(entries: List<SheetEntry>, onRowClick: (SheetEntry) -> Unit, appMode: AppMode) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(CaeColors.SurfaceContainerLowest)
     ) {
-        TableHeader()
+        TableHeader(appMode)
         entries.forEach { entry ->
-            TableRow(entry, onClick = { onRowClick(entry) })
+            TableRow(entry, onClick = { onRowClick(entry) }, appMode = appMode)
         }
     }
 }
 
 @Composable
-private fun TableHeader() {
+private fun TableHeader(appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -284,14 +291,17 @@ private fun TableHeader() {
     ) {
         Text(stringResource(R.string.sheet_col_category), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, modifier = Modifier.weight(COL_CATEGORY_WEIGHT).padding(horizontal = 12.dp))
         Text(stringResource(R.string.sheet_col_amount), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.End, modifier = Modifier.weight(COL_AMOUNT_WEIGHT).padding(horizontal = 12.dp))
-        Text(stringResource(R.string.sheet_col_cost_center), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_COST_CENTER_WEIGHT).padding(horizontal = 4.dp))
-        Text(stringResource(R.string.sheet_col_status), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_STATUS_WEIGHT).padding(horizontal = 4.dp))
+        Text(stringResource(if (isPro) R.string.sheet_col_cost_center else R.string.sheet_col_cost_center_simple), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_COST_CENTER_WEIGHT).padding(horizontal = 4.dp))
+        if (isPro) {
+            Text(stringResource(R.string.sheet_col_status), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_STATUS_WEIGHT).padding(horizontal = 4.dp))
+        }
     }
     HorizontalDivider(color = CaeColors.SurfaceVariant, thickness = 2.dp)
 }
 
 @Composable
-private fun TableRow(entry: SheetEntry, onClick: () -> Unit) {
+private fun TableRow(entry: SheetEntry, onClick: () -> Unit, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Column {
         Row(
             modifier = Modifier
@@ -317,8 +327,10 @@ private fun TableRow(entry: SheetEntry, onClick: () -> Unit) {
                 modifier = Modifier.weight(COL_AMOUNT_WEIGHT).padding(horizontal = 12.dp)
             )
             Text(entry.costCenterCode, fontSize = 14.sp, color = CaeColors.OnSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.weight(COL_COST_CENTER_WEIGHT).padding(horizontal = 4.dp))
-            Box(modifier = Modifier.weight(COL_STATUS_WEIGHT), contentAlignment = Alignment.Center) {
-                StatusPill(status = entry.status)
+            if (isPro) {
+                Box(modifier = Modifier.weight(COL_STATUS_WEIGHT), contentAlignment = Alignment.Center) {
+                    StatusPill(status = entry.status)
+                }
             }
         }
         HorizontalDivider(color = CaeColors.SurfaceVariant)
@@ -357,17 +369,23 @@ private fun EntryFormDialog(
     initial: SheetEntry?,
     onDismiss: () -> Unit,
     onSave: (SheetEntry) -> Unit,
-    onDelete: (() -> Unit)?
+    onDelete: (() -> Unit)?,
+    appMode: AppMode
 ) {
     var category by remember { mutableStateOf(initial?.category ?: "") }
-    var amountText by remember { mutableStateOf(initial?.amount?.toLong()?.toString() ?: "") }
+    var amountText by remember { mutableStateOf(initial?.amount?.let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() } ?: "") }
     var costCenterCode by remember { mutableStateOf(initial?.costCenterCode ?: "") }
     var isCredit by remember { mutableStateOf(initial?.isCredit ?: false) }
     var status by remember { mutableStateOf(initial?.status ?: EntryStatus.PENDING) }
     var icon by remember { mutableStateOf(initial?.icon ?: SheetCategoryIcon.GENERIC) }
+    var taxRateText by remember { mutableStateOf(initial?.taxRate?.toString() ?: "0") }
+    var isTtc by remember { mutableStateOf(initial?.isTtc ?: true) }
+    var ledgerAccount by remember { mutableStateOf(initial?.ledgerAccount ?: "") }
+
     var statusMenuExpanded by remember { mutableStateOf(false) }
     var iconMenuExpanded by remember { mutableStateOf(false) }
 
+    val isPro = appMode == AppMode.PRO
     val isValid = category.isNotBlank() && costCenterCode.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0.0
 
     AlertDialog(
@@ -381,18 +399,53 @@ private fun EntryFormDialog(
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text(stringResource(R.string.form_label_category)) },
+                    label = { Text(stringResource(if (isPro) R.string.form_label_category else R.string.form_label_category)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = { amountText = it.filter { c -> c.isDigit() } },
-                    label = { Text(stringResource(R.string.form_label_amount)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+                if (isPro) {
+                    OutlinedTextField(
+                        value = ledgerAccount,
+                        onValueChange = { ledgerAccount = it },
+                        label = { Text(stringResource(R.string.form_label_ledger_account)) },
+                        placeholder = { Text(stringResource(R.string.form_label_ledger_account_example)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = amountText,
+                        onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
+                        label = { Text(stringResource(R.string.form_label_amount)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1.5f)
+                    )
+                    if (isPro) {
+                        OutlinedTextField(
+                            value = taxRateText,
+                            onValueChange = { taxRateText = it.filter { c -> c.isDigit() || c == '.' } },
+                            label = { Text(stringResource(R.string.form_label_tax_rate)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                if (isPro) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Text(stringResource(R.string.form_label_is_ttc), fontSize = 14.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = isTtc, onCheckedChange = { isTtc = it })
+                    }
+                }
+
                 val availableCostCenters = AppRepository.costCenters
                 if (availableCostCenters.isNotEmpty()) {
                     var ccMenuExpanded by remember { mutableStateOf(false) }
@@ -402,7 +455,7 @@ private fun EntryFormDialog(
                                 ?.let { "${it.code} — ${it.name}" } ?: costCenterCode,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text(stringResource(R.string.form_label_cost_center)) },
+                            label = { Text(stringResource(if (isPro) R.string.form_label_cost_center else R.string.form_label_cost_center_simple)) },
                             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -427,8 +480,8 @@ private fun EntryFormDialog(
                     OutlinedTextField(
                         value = costCenterCode,
                         onValueChange = { costCenterCode = it.uppercase() },
-                        label = { Text(stringResource(R.string.form_label_cost_center_example)) },
-                        supportingText = { Text(stringResource(R.string.form_costcenter_tip)) },
+                        label = { Text(stringResource(if (isPro) R.string.form_label_cost_center_example else R.string.form_label_cost_center_example_simple)) },
+                        supportingText = { Text(stringResource(if (isPro) R.string.form_costcenter_tip else R.string.form_costcenter_tip_simple)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -441,29 +494,28 @@ private fun EntryFormDialog(
                     FilterChip(selected = isCredit, onClick = { isCredit = true }, label = { Text(stringResource(R.string.filter_income)) })
                 }
 
-                Box {
-                    OutlinedTextField(
-                        value = stringResource(status.labelResId),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.form_label_status)) },
-                        trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    // A read-only OutlinedTextField swallows taps before a
-                    // Modifier.clickable placed directly on it ever fires.
-                    // A transparent box drawn on top actually catches the tap.
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { statusMenuExpanded = true }
-                    )
-                    DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
-                        EntryStatus.entries.forEach { s ->
-                            DropdownMenuItem(text = { Text(stringResource(s.labelResId)) }, onClick = { status = s; statusMenuExpanded = false })
+                if (isPro) {
+                    Box {
+                        OutlinedTextField(
+                            value = stringResource(status.labelResId),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.form_label_status)) },
+                            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { statusMenuExpanded = true }
+                        )
+                        DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
+                            EntryStatus.entries.forEach { s ->
+                                DropdownMenuItem(text = { Text(stringResource(s.labelResId)) }, onClick = { status = s; statusMenuExpanded = false })
+                            }
                         }
                     }
                 }
@@ -506,7 +558,10 @@ private fun EntryFormDialog(
                             isCredit = isCredit,
                             costCenterCode = costCenterCode.trim(),
                             status = status,
-                            timestampMillis = initial?.timestampMillis ?: System.currentTimeMillis()
+                            timestampMillis = initial?.timestampMillis ?: System.currentTimeMillis(),
+                            taxRate = taxRateText.toDoubleOrNull() ?: 0.0,
+                            isTtc = isTtc,
+                            ledgerAccount = ledgerAccount.trim()
                         )
                     )
                 }

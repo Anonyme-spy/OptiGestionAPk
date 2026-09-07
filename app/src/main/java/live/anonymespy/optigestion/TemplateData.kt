@@ -108,4 +108,60 @@ object TemplateData {
         CostCenter(code = "FAC-01", name = "Facilities / Bureaux", icon = DepartmentIcon.PRODUCTION, monthlyBudget = 500_000.0),
         CostCenter(code = "VENTE-01", name = "Ventes", icon = DepartmentIcon.SALES, monthlyBudget = 0.0)
     )
+
+    fun simpleSheetEntries(): List<SheetEntry> {
+        val now = System.currentTimeMillis()
+        val day = 86_400_000L
+        return listOf(
+            SheetEntry(
+                category = "Courses alimentaires",
+                icon = SheetCategoryIcon.GENERIC,
+                amount = 150.0,
+                isCredit = false,
+                costCenterCode = "VIE",
+                status = EntryStatus.APPROVED,
+                timestampMillis = now - day
+            ),
+            SheetEntry(
+                category = "Abonnement Internet",
+                icon = SheetCategoryIcon.DOMAIN,
+                amount = 40.0,
+                isCredit = false,
+                costCenterCode = "MAISON",
+                status = EntryStatus.APPROVED,
+                timestampMillis = now - 5 * day
+            ),
+            SheetEntry(
+                category = "Salaire",
+                icon = SheetCategoryIcon.HANDSHAKE,
+                amount = 2500.0,
+                isCredit = true,
+                costCenterCode = "REVENU",
+                status = EntryStatus.APPROVED,
+                timestampMillis = now - 10 * day
+            ),
+            SheetEntry(
+                category = "Restaurant",
+                icon = SheetCategoryIcon.GENERIC,
+                amount = 65.0,
+                isCredit = false,
+                costCenterCode = "LOISIRS",
+                status = EntryStatus.APPROVED,
+                timestampMillis = now - 12 * day
+            )
+        )
+    }
+
+    fun simpleBudgetCategories(): List<BudgetCategoryUi> = listOf(
+        BudgetCategoryUi(name = "Alimentation", icon = BudgetCategoryIcon.MATERIALS, budgetAmount = 400.0, initialActual = 150.0),
+        BudgetCategoryUi(name = "Logement", icon = BudgetCategoryIcon.OVERHEAD, budgetAmount = 800.0, initialActual = 800.0),
+        BudgetCategoryUi(name = "Loisirs", icon = BudgetCategoryIcon.LABOR, budgetAmount = 200.0, initialActual = 65.0)
+    )
+
+    fun simpleCostCenters(): List<CostCenter> = listOf(
+        CostCenter(code = "VIE", name = "Vie quotidienne", icon = DepartmentIcon.PRODUCTION, monthlyBudget = 600.0),
+        CostCenter(code = "MAISON", name = "Maison", icon = DepartmentIcon.ADMIN, monthlyBudget = 900.0),
+        CostCenter(code = "LOISIRS", name = "Loisirs", icon = DepartmentIcon.SALES, monthlyBudget = 200.0),
+        CostCenter(code = "REVENU", name = "Revenus", icon = DepartmentIcon.SALES, monthlyBudget = 0.0)
+    )
 }

@@ -48,11 +48,12 @@ fun CostCentersScreen() {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Text(text = stringResource(R.string.cost_centers_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
-            Text(text = stringResource(R.string.cost_centers_subtitle), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+            val isPro = AppRepository.appMode == AppMode.PRO
+            Text(text = stringResource(if (isPro) R.string.cost_centers_title else R.string.cost_centers_title_simple), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+            Text(text = stringResource(if (isPro) R.string.cost_centers_subtitle else R.string.cost_centers_subtitle_simple), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
 
             if (costCenters.isEmpty()) {
-                EmptyCostCentersState(onAdd = { showAddDialog = true })
+                EmptyCostCentersState(onAdd = { showAddDialog = true }, appMode = AppRepository.appMode)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     summaries.forEach { summary -> CostCenterSummaryCard(summary) }
@@ -60,7 +61,7 @@ fun CostCentersScreen() {
 
                 Spacer(Modifier.height(24.dp))
 
-                Text(text = stringResource(R.string.cost_centers_distribution_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, modifier = Modifier.padding(bottom = 8.dp))
+                Text(text = stringResource(if (isPro) R.string.cost_centers_distribution_title else R.string.cost_centers_distribution_title_simple), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, modifier = Modifier.padding(bottom = 8.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     departments.forEach { dept ->
@@ -82,27 +83,29 @@ fun CostCentersScreen() {
             containerColor = CaeColors.Primary,
             contentColor = CaeColors.OnPrimary
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.add_cost_center))
+            Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(if (AppRepository.appMode == AppMode.PRO) R.string.add_cost_center else R.string.add_cost_center_simple))
         }
     }
 
     if (showAddDialog) {
         CostCenterFormDialog(
-            title = stringResource(R.string.new_cost_center_title),
+            title = stringResource(if (AppRepository.appMode == AppMode.PRO) R.string.new_cost_center_title else R.string.new_cost_center_title_simple),
             initial = null,
             onDismiss = { showAddDialog = false },
             onSave = { cc -> AppRepository.addCostCenter(cc.code, cc.name, cc.icon, cc.monthlyBudget); showAddDialog = false },
-            onDelete = null
+            onDelete = null,
+            appMode = AppRepository.appMode
         )
     }
 
     editingCenter?.let { cc ->
         CostCenterFormDialog(
-            title = stringResource(R.string.edit_cost_center_title),
+            title = stringResource(if (AppRepository.appMode == AppMode.PRO) R.string.edit_cost_center_title else R.string.edit_cost_center_title_simple),
             initial = cc,
             onDismiss = { editingCenter = null },
             onSave = { updated -> AppRepository.updateCostCenter(updated); editingCenter = null },
-            onDelete = { AppRepository.deleteCostCenter(cc.id); editingCenter = null }
+            onDelete = { AppRepository.deleteCostCenter(cc.id); editingCenter = null },
+            appMode = AppRepository.appMode
         )
     }
 }
@@ -110,7 +113,8 @@ fun CostCentersScreen() {
 /* ---------------- Empty state ---------------- */
 
 @Composable
-private fun EmptyCostCentersState(onAdd: () -> Unit) {
+private fun EmptyCostCentersState(onAdd: () -> Unit, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
@@ -122,10 +126,10 @@ private fun EmptyCostCentersState(onAdd: () -> Unit) {
         ) {
             Icon(imageVector = Icons.Filled.AccountTree, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(40.dp))
             Spacer(Modifier.height(12.dp))
-            Text(text = stringResource(R.string.empty_cost_centers_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
+            Text(text = stringResource(if (isPro) R.string.empty_cost_centers_title else R.string.empty_cost_centers_title_simple), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary, textAlign = TextAlign.Center)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.empty_cost_centers_body),
+                text = stringResource(if (isPro) R.string.empty_cost_centers_body else R.string.empty_cost_centers_body_simple),
                 fontSize = 13.sp,
                 color = CaeColors.OnSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -134,7 +138,7 @@ private fun EmptyCostCentersState(onAdd: () -> Unit) {
             Button(onClick = onAdd, colors = ButtonDefaults.buttonColors(containerColor = CaeColors.Primary)) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.add_cost_center))
+                Text(stringResource(if (isPro) R.string.add_cost_center else R.string.add_cost_center_simple))
             }
         }
     }
@@ -323,7 +327,8 @@ private fun CostCenterFormDialog(
     initial: CostCenter?,
     onDismiss: () -> Unit,
     onSave: (CostCenter) -> Unit,
-    onDelete: (() -> Unit)?
+    onDelete: (() -> Unit)?,
+    appMode: AppMode
 ) {
     var code by remember { mutableStateOf(initial?.code ?: "") }
     var name by remember { mutableStateOf(initial?.name ?: "") }
@@ -331,6 +336,7 @@ private fun CostCenterFormDialog(
     var icon by remember { mutableStateOf(initial?.icon ?: DepartmentIcon.ADMIN) }
     var iconMenuExpanded by remember { mutableStateOf(false) }
 
+    val isPro = appMode == AppMode.PRO
     val isValid = code.isNotBlank() && name.isNotBlank()
 
     AlertDialog(
@@ -344,21 +350,21 @@ private fun CostCenterFormDialog(
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it.uppercase() },
-                    label = { Text(stringResource(R.string.form_label_cost_center_code)) },
+                    label = { Text(stringResource(if (isPro) R.string.form_label_cost_center_code else R.string.form_label_cost_center_code_simple)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.form_label_cost_center_name)) },
+                    label = { Text(stringResource(if (isPro) R.string.form_label_cost_center_name else R.string.form_label_cost_center_name_simple)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = budgetText,
                     onValueChange = { budgetText = it.filter { c -> c.isDigit() } },
-                    label = { Text(stringResource(R.string.form_label_monthly_budget)) },
+                    label = { Text(stringResource(if (isPro) R.string.form_label_monthly_budget else R.string.form_label_monthly_budget_simple)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()

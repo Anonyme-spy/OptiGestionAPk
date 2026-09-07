@@ -11,6 +11,9 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 import live.anonymespy.optigestion.ui.theme.ThemeMode
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Single, app-wide source of truth. Every screen reads from and writes to
@@ -31,6 +34,7 @@ object AppRepository {
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_CASH_ON_HAND = "cash_on_hand"
     private const val KEY_LANGUAGE = "language"
+    private const val KEY_APP_MODE = "app_mode"
 
     private lateinit var prefs: SharedPreferences
 
@@ -52,6 +56,10 @@ object AppRepository {
 
     /** Display language. Only Dashboard/Navigation/Settings are localized so far — see Strings.kt. */
     var language by mutableStateOf(AppLanguage.FRENCH)
+        private set
+
+    /** The current UI mode (Simple vs Pro). */
+    var appMode by mutableStateOf(AppMode.PRO)
         private set
 
     /** The transactional ledger shown on the Sheets screen. Empty by default. */
@@ -78,6 +86,9 @@ object AppRepository {
         cashOnHand = prefs.getFloat(KEY_CASH_ON_HAND, 0f).toDouble()
         prefs.getString(KEY_LANGUAGE, null)?.let { saved ->
             language = runCatching { AppLanguage.valueOf(saved) }.getOrDefault(AppLanguage.FRENCH)
+        }
+        prefs.getString(KEY_APP_MODE, null)?.let { saved ->
+            appMode = runCatching { AppMode.valueOf(saved) }.getOrDefault(AppMode.PRO)
         }
         // Bootstrap: make sure the per-app locale matches our saved preference on
         // cold start (covers the very first run after this feature ships, before
@@ -115,19 +126,29 @@ object AppRepository {
 
     /* ---------------- Onboarding ---------------- */
 
-    fun loadTemplate() {
+    fun loadTemplate(mode: AppMode) {
+        appMode = mode
         entries.clear()
-        entries.addAll(TemplateData.sheetEntries())
-        budgetCategories.clear()
-        budgetCategories.addAll(TemplateData.budgetCategories())
-        costCenters.clear()
-        costCenters.addAll(TemplateData.costCenters())
+        if (mode == AppMode.PRO) {
+            entries.addAll(TemplateData.sheetEntries())
+            budgetCategories.clear()
+            budgetCategories.addAll(TemplateData.budgetCategories())
+            costCenters.clear()
+            costCenters.addAll(TemplateData.costCenters())
+        } else {
+            entries.addAll(TemplateData.simpleSheetEntries())
+            budgetCategories.clear()
+            budgetCategories.addAll(TemplateData.simpleBudgetCategories())
+            costCenters.clear()
+            costCenters.addAll(TemplateData.simpleCostCenters())
+        }
         periodLabel = TemplateData.periodLabel
         hasChosenSetup = true
         persist()
     }
 
-    fun startEmpty() {
+    fun startEmpty(mode: AppMode) {
+        appMode = mode
         entries.clear()
         budgetCategories.clear()
         costCenters.clear()
@@ -148,6 +169,7 @@ object AppRepository {
             .remove(KEY_ENTRIES)
             .remove(KEY_CATEGORIES)
             .remove(KEY_COST_CENTERS)
+            .remove(KEY_APP_MODE)
             .apply()
     }
 
@@ -171,8 +193,8 @@ object AppRepository {
 
     /* ---------------- Budget categories ---------------- */
 
-    fun addBudgetCategory(name: String, icon: BudgetCategoryIcon, budgetAmount: Double) {
-        budgetCategories.add(BudgetCategoryUi(name = name, icon = icon, budgetAmount = budgetAmount))
+    fun addBudgetCategory(name: String, icon: BudgetCategoryIcon, budgetAmount: Double, ledgerAccount: String = "") {
+        budgetCategories.add(BudgetCategoryUi(name = name, icon = icon, budgetAmount = budgetAmount, ledgerAccount = ledgerAccount))
         persist()
     }
 
@@ -208,8 +230,10 @@ object AppRepository {
     }
 
     /** Total spend (debits only) posted against a given cost-center code. */
-    fun costCenterSpend(code: String): Double =
-        entries.filter { !it.isCredit && it.costCenterCode == code }.sumOf { it.amount }
+    fun costCenterSpend(code: String): Double {
+        val useHt = appMode == AppMode.PRO
+        return entries.filter { !it.isCredit && it.costCenterCode == code }.sumOf { if (useHt) it.amountHt else it.amountTtc }
+    }
 
     /** Every cost center with its live spend, sorted by how close to (or past) budget it is. */
     fun departmentBudgets(): List<DepartmentBudget> =
@@ -273,6 +297,10 @@ object AppRepository {
                     put("costCenterCode", e.costCenterCode)
                     put("status", e.status.name)
                     put("timestampMillis", e.timestampMillis)
+                    // New fields
+                    put("taxRate", e.taxRate)
+                    put("isTtc", e.isTtc)
+                    put("ledgerAccount", e.ledgerAccount)
                 })
             }
         }
@@ -284,6 +312,7 @@ object AppRepository {
                     put("icon", c.icon.name)
                     put("budgetAmount", c.budgetAmount)
                     put("actualInput", c.actualInput)
+                    put("ledgerAccount", c.ledgerAccount)
                 })
             }
         }
@@ -304,6 +333,7 @@ object AppRepository {
             .putString(KEY_ENTRIES, entriesJson.toString())
             .putString(KEY_CATEGORIES, categoriesJson.toString())
             .putString(KEY_COST_CENTERS, costCentersJson.toString())
+            .putString(KEY_APP_MODE, appMode.name)
             .apply()
     }
 
@@ -324,7 +354,10 @@ object AppRepository {
                         isCredit = o.getBoolean("isCredit"),
                         costCenterCode = o.getString("costCenterCode"),
                         status = EntryStatus.valueOf(o.getString("status")),
-                        timestampMillis = o.getLong("timestampMillis")
+                        timestampMillis = o.getLong("timestampMillis"),
+                        taxRate = o.optDouble("taxRate", 0.0),
+                        isTtc = o.optBoolean("isTtc", true),
+                        ledgerAccount = o.optString("ledgerAccount", "")
                     )
                 )
             }
@@ -339,7 +372,8 @@ object AppRepository {
                     id = o.getString("id"),
                     name = o.getString("name"),
                     icon = BudgetCategoryIcon.valueOf(o.getString("icon")),
-                    budgetAmount = o.getDouble("budgetAmount")
+                    budgetAmount = o.getDouble("budgetAmount"),
+                    ledgerAccount = o.optString("ledgerAccount", "")
                 )
                 ui.actualInput = o.optString("actualInput", "")
                 budgetCategories.add(ui)
@@ -367,14 +401,21 @@ object AppRepository {
     /* ---------------- Derived analytics (Dashboard + Stats read these) ---------------- */
 
     fun netMargin(): Double {
-        val credits = entries.filter { it.isCredit }.sumOf { it.amount }
-        val debits = entries.filter { !it.isCredit }.sumOf { it.amount }
+        val useHt = appMode == AppMode.PRO
+        val credits = entries.filter { it.isCredit }.sumOf { if (useHt) it.amountHt else it.amountTtc }
+        val debits = entries.filter { !it.isCredit }.sumOf { if (useHt) it.amountHt else it.amountTtc }
         return credits - debits
     }
 
-    fun totalCosts(): Double = entries.filter { !it.isCredit }.sumOf { it.amount }
+    fun totalCosts(): Double {
+        val useHt = appMode == AppMode.PRO
+        return entries.filter { !it.isCredit }.sumOf { if (useHt) it.amountHt else it.amountTtc }
+    }
 
-    fun totalRevenue(): Double = entries.filter { it.isCredit }.sumOf { it.amount }
+    fun totalRevenue(): Double {
+        val useHt = appMode == AppMode.PRO
+        return entries.filter { it.isCredit }.sumOf { if (useHt) it.amountHt else it.amountTtc }
+    }
 
     /** Net margin as a percentage of revenue, or null when there's no revenue to divide by. */
     fun marginPercent(): Double? {
@@ -385,9 +426,10 @@ object AppRepository {
 
     /** Average monthly cash outflow over the most recent (up to 3) months with expense data. */
     fun burnRate(): Double {
+        // Burn rate is a cash-flow KPI, so always use TTC (actual cash leaving)
         val byMonth = entries.filter { !it.isCredit }
             .groupBy { monthKeyAndLabel(it.timestampMillis).first }
-            .mapValues { (_, list) -> list.sumOf { it.amount } }
+            .mapValues { (_, list) -> list.sumOf { it.amountTtc } }
             .toList()
             .sortedByDescending { it.first }
             .take(3)
@@ -419,9 +461,10 @@ object AppRepository {
 
     /** Top cost centers by spend, for the Dashboard bar chart. */
     fun costCenterBars(limit: Int = 4): List<CostCenterBar> {
+        val useHt = appMode == AppMode.PRO
         val byCenterCode = entries.filter { !it.isCredit }
             .groupBy { it.costCenterCode }
-            .mapValues { (_, list) -> list.sumOf { it.amount } }
+            .mapValues { (_, list) -> list.sumOf { if (useHt) it.amountHt else it.amountTtc } }
             .toList()
             .sortedByDescending { it.second }
             .take(limit)
@@ -469,12 +512,16 @@ object AppRepository {
     /** Net margin per month (last 6 months with data), normalized to 0..100 for the line chart. */
     fun profitabilityTrend(): List<TrendPoint> {
         if (entries.isEmpty()) return emptyList()
+        val useHt = appMode == AppMode.PRO
         val byMonth = entries.groupBy { monthKeyAndLabel(it.timestampMillis) }
             .toList()
             .sortedBy { it.first.first } // sort by "yyyy-M" key
             .takeLast(6)
             .map { (keyLabel, list) ->
-                val net = list.sumOf { if (it.isCredit) it.amount else -it.amount }
+                val net = list.sumOf {
+                    val valToUse = if (useHt) it.amountHt else it.amountTtc
+                    if (it.isCredit) valToUse else -valToUse
+                }
                 keyLabel.second to net
             }
         if (byMonth.size < 2) return emptyList()
@@ -497,6 +544,7 @@ object AppRepository {
     /** Income vs expense per month (last [limit] months with data), for the Reports cash-flow chart. */
     fun cashFlowByMonth(limit: Int = 6): List<CashFlowPoint> {
         if (entries.isEmpty()) return emptyList()
+        // Cash flow is about actual cash, so always use TTC
         return entries.groupBy { monthKeyAndLabel(it.timestampMillis) }
             .toList()
             .sortedBy { it.first.first }
@@ -504,21 +552,31 @@ object AppRepository {
             .map { (keyLabel, list) ->
                 CashFlowPoint(
                     monthLabel = keyLabel.second,
-                    income = list.filter { it.isCredit }.sumOf { it.amount },
-                    expense = list.filter { !it.isCredit }.sumOf { it.amount }
+                    income = list.filter { it.isCredit }.sumOf { it.amountTtc },
+                    expense = list.filter { !it.isCredit }.sumOf { it.amountTtc }
                 )
             }
     }
 
     /** Full ledger as CSV text, for the Reports/Settings export feature. */
     fun exportCsv(): String {
+        val isPro = appMode == AppMode.PRO
         val sb = StringBuilder()
-        sb.append("Date,Catégorie,Centre de Coût,Type,Montant,Statut\n")
+        if (isPro) {
+            sb.append("Date,Catégorie,Compte,Centre,Type,Montant Saisi,HT/TTC,Taux TVA,Montant HT,TVA,Montant TTC,Statut\n")
+        } else {
+            sb.append("Date,Intitulé,Projet,Type,Montant,Statut\n")
+        }
         entries.sortedByDescending { it.timestampMillis }.forEach { e ->
-            val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.FRENCH).format(java.util.Date(e.timestampMillis))
+            val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.FRENCH).format(Date(e.timestampMillis))
             val type = if (e.isCredit) "Recette" else "Dépense"
             val categoryEscaped = "\"" + e.category.replace("\"", "\"\"") + "\""
-            sb.append("$dateStr,$categoryEscaped,${e.costCenterCode},$type,${e.amount},${e.status.name}\n")
+            if (isPro) {
+                val modeLabel = if (e.isTtc) "TTC" else "HT"
+                sb.append("$dateStr,$categoryEscaped,${e.ledgerAccount},${e.costCenterCode},$type,${e.amount},$modeLabel,${e.taxRate},${e.amountHt},${e.taxAmount},${e.amountTtc},${e.status.name}\n")
+            } else {
+                sb.append("$dateStr,$categoryEscaped,${e.costCenterCode},$type,${e.amount},${e.status.name}\n")
+            }
         }
         return sb.toString()
     }

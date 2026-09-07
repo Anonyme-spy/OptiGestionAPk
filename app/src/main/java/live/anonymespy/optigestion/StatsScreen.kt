@@ -74,18 +74,24 @@ fun StatsScreen() {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        Text(text = stringResource(R.string.stats_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
-        Text(text = stringResource(R.string.stats_subtitle), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+        val isPro = AppRepository.appMode == AppMode.PRO
+        Text(text = stringResource(if (isPro) R.string.stats_title else R.string.stats_title_simple), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        Text(text = stringResource(if (isPro) R.string.stats_subtitle else R.string.stats_subtitle_simple), fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
 
         PeriodSelectorRow(selected = periodFilter, onSelect = { periodFilter = it })
 
         Spacer(Modifier.height(16.dp))
 
-        KpiStripSection()
+        KpiStripSection(AppRepository.appMode)
 
         Spacer(Modifier.height(16.dp))
 
-        PeriodSummaryCard(filtered = periodEntries, filter = periodFilter)
+        PeriodSummaryCard(filtered = periodEntries, filter = periodFilter, appMode = AppRepository.appMode)
+
+        if (isPro) {
+            Spacer(Modifier.height(24.dp))
+            ProfitAndLossSection(periodEntries)
+        }
 
         if (alerts.isNotEmpty()) {
             Spacer(Modifier.height(16.dp))
@@ -94,19 +100,19 @@ fun StatsScreen() {
 
         Spacer(Modifier.height(24.dp))
 
-        CashFlowSection(cashFlow)
+        CashFlowSection(cashFlow, AppRepository.appMode)
 
         Spacer(Modifier.height(24.dp))
 
-        CostDistributionSection(totalCostLabel, costDistribution)
+        CostDistributionSection(totalCostLabel, costDistribution, AppRepository.appMode)
 
         Spacer(Modifier.height(24.dp))
 
-        ProfitabilityTrendSection(profitabilityDeltaLabel, profitabilityTrend)
+        ProfitabilityTrendSection(profitabilityDeltaLabel, profitabilityTrend, AppRepository.appMode)
 
         Spacer(Modifier.height(24.dp))
 
-        CostCenterRankingSection(departments)
+        CostCenterRankingSection(departments, AppRepository.appMode)
 
         Spacer(Modifier.height(24.dp))
 
@@ -153,16 +159,17 @@ private fun PeriodSelectorRow(selected: PeriodFilter, onSelect: (PeriodFilter) -
 /* ---------------- KPI strip (margin, burn rate, runway, growth) ---------------- */
 
 @Composable
-private fun KpiStripSection() {
+private fun KpiStripSection(appMode: AppMode) {
     val margin = AppRepository.marginPercent()
     val burn = AppRepository.burnRate()
     val runway = AppRepository.runwayMonths()
     val growth = AppRepository.revenueGrowthPercent()
+    val isPro = appMode == AppMode.PRO
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        MetricTile(stringResource(R.string.kpi_net_margin), if (margin != null) "${formatPercent(margin)}%" else "—", modifier = Modifier.weight(1f))
-        MetricTile(stringResource(R.string.kpi_burn_rate), formatCurrencyCompact(burn), modifier = Modifier.weight(1f))
-        MetricTile(stringResource(R.string.kpi_runway), if (runway != null) "${formatMonths(runway)} ${stringResource(R.string.months_suffix)}" else stringResource(R.string.infinite_symbol), modifier = Modifier.weight(1f))
+        MetricTile(stringResource(if (isPro) R.string.kpi_net_margin else R.string.stats_kpi_net_margin_simple), if (margin != null) "${formatPercent(margin)}%" else "—", modifier = Modifier.weight(1f))
+        MetricTile(stringResource(if (isPro) R.string.kpi_burn_rate else R.string.kpi_burn_rate_simple), formatCurrencyCompact(burn), modifier = Modifier.weight(1f))
+        MetricTile(stringResource(if (isPro) R.string.kpi_runway else R.string.kpi_runway_simple), if (runway != null) "${formatMonths(runway)} ${stringResource(R.string.months_suffix)}" else stringResource(R.string.infinite_symbol), modifier = Modifier.weight(1f))
         MetricTile(
             stringResource(R.string.kpi_growth),
             if (growth != null) "${if (growth >= 0) "+" else ""}${formatPercent(growth)}%" else "—",
@@ -190,9 +197,12 @@ private fun MetricTile(label: String, value: String, modifier: Modifier = Modifi
 /* ---------------- Period summary ---------------- */
 
 @Composable
-private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter) {
-    val income = filtered.filter { it.isCredit }.sumOf { it.amount }
-    val expense = filtered.filter { !it.isCredit }.sumOf { it.amount }
+private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
+    val incomeTtc = filtered.filter { it.isCredit }.sumOf { it.amountTtc }
+    val expenseTtc = filtered.filter { !it.isCredit }.sumOf { it.amountTtc }
+    val incomeHt = filtered.filter { it.isCredit }.sumOf { it.amountHt }
+    val expenseHt = filtered.filter { !it.isCredit }.sumOf { it.amountHt }
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -211,18 +221,65 @@ private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter) 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text(stringResource(R.string.stats_revenue_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
-                    Text(formatCurrencyCompact(income), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnTertiaryContainer)
+                    Text(formatCurrencyCompact(if (isPro) incomeHt else incomeTtc), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnTertiaryContainer)
+                    if (isPro) Text("${formatCurrencyCompact(incomeTtc)} ${stringResource(R.string.stats_ttc_label)}", fontSize = 10.sp, color = CaeColors.OnSurfaceVariant.copy(alpha = 0.6f))
                 }
                 Column {
                     Text(stringResource(R.string.stats_expense_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
-                    Text(formatCurrencyCompact(expense), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Error)
+                    Text(formatCurrencyCompact(if (isPro) expenseHt else expenseTtc), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Error)
+                    if (isPro) Text("${formatCurrencyCompact(expenseTtc)} ${stringResource(R.string.stats_ttc_label)}", fontSize = 10.sp, color = CaeColors.OnSurfaceVariant.copy(alpha = 0.6f))
                 }
                 Column {
                     Text(stringResource(R.string.stats_net_label), fontSize = 12.sp, color = CaeColors.OnSurfaceVariant)
-                    Text(formatCurrencyCompact(income - expense), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
+                    Text(formatCurrencyCompact(if (isPro) (incomeHt - expenseHt) else (incomeTtc - expenseTtc)), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProfitAndLossSection(entries: List<SheetEntry>) {
+    val revenueHt = entries.filter { it.isCredit }.sumOf { it.amountHt }
+    val expenseHt = entries.filter { !it.isCredit }.sumOf { it.amountHt }
+    val marginHt = revenueHt - expenseHt
+    val taxCollected = entries.filter { it.isCredit }.sumOf { it.taxAmount }
+    val taxDeductible = entries.filter { !it.isCredit }.sumOf { it.taxAmount }
+    val netTax = taxCollected - taxDeductible
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.stats_pl_title),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.6.sp,
+                color = CaeColors.Primary
+            )
+            Spacer(Modifier.height(16.dp))
+            PlRow(label = stringResource(R.string.stats_revenue_label) + " (HT)", value = revenueHt, color = CaeColors.OnTertiaryContainer)
+            PlRow(label = stringResource(R.string.stats_expense_label) + " (HT)", value = -expenseHt, color = CaeColors.Error)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = CaeColors.SurfaceVariant)
+            PlRow(label = "RÉSULTAT D'EXPLOITATION", value = marginHt, color = CaeColors.Primary, isBold = true)
+            Spacer(Modifier.height(16.dp))
+            Text(text = "DÉTAIL TVA", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            PlRow(label = "TVA Collectée", value = taxCollected, color = CaeColors.OnSurface)
+            PlRow(label = "TVA Déductible", value = -taxDeductible, color = CaeColors.OnSurface)
+            PlRow(label = "TVA Nette à payer", value = netTax, color = if (netTax > 0) CaeColors.Error else CaeColors.OnTertiaryContainer)
+        }
+    }
+}
+
+@Composable
+private fun PlRow(label: String, value: Double, color: Color, isBold: Boolean = false) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text = label, fontSize = 13.sp, color = CaeColors.OnSurfaceVariant, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal)
+        Text(text = formatCurrencyCompact(value), fontSize = 14.sp, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium, color = color)
     }
 }
 
@@ -257,7 +314,8 @@ private fun BudgetAlertsSection(alerts: List<BudgetAlert>) {
 /* ---------------- Cash flow (income vs expense bar chart) ---------------- */
 
 @Composable
-private fun CashFlowSection(data: List<CashFlowPoint>) {
+private fun CashFlowSection(data: List<CashFlowPoint>, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.White),
@@ -265,7 +323,7 @@ private fun CashFlowSection(data: List<CashFlowPoint>) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "FLUX DE TRÉSORERIE (6 DERNIERS MOIS)",
+                text = stringResource(if (isPro) R.string.stats_cashflow_title else R.string.stats_cashflow_title_simple),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -339,7 +397,8 @@ private fun CashFlowBarChart(data: List<CashFlowPoint>, modifier: Modifier = Mod
 /* ---------------- Cost center ranking ---------------- */
 
 @Composable
-private fun CostCenterRankingSection(departments: List<DepartmentBudget>) {
+private fun CostCenterRankingSection(departments: List<DepartmentBudget>, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.White),
@@ -347,7 +406,7 @@ private fun CostCenterRankingSection(departments: List<DepartmentBudget>) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "TOP CENTRES DE COÛT",
+                text = stringResource(if (isPro) R.string.stats_ranking_title else R.string.stats_ranking_title_simple),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -390,7 +449,8 @@ private fun CostCenterRankingSection(departments: List<DepartmentBudget>) {
 /* ---------------- Cost distribution (donut / pie chart) ---------------- */
 
 @Composable
-private fun CostDistributionSection(totalCostLabel: String, slices: List<CostDistributionSlice>) {
+private fun CostDistributionSection(totalCostLabel: String, slices: List<CostDistributionSlice>, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.White),
@@ -401,7 +461,7 @@ private fun CostDistributionSection(totalCostLabel: String, slices: List<CostDis
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "RÉPARTITION DES COÛTS",
+                text = stringResource(if (isPro) R.string.stats_distribution_title else R.string.stats_distribution_title_simple),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -425,7 +485,7 @@ private fun CostDistributionSection(totalCostLabel: String, slices: List<CostDis
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = totalCostLabel, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
-                        Text(text = "Coût Total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant)
+                        Text(text = stringResource(if (isPro) R.string.stats_total_cost_label else R.string.stats_total_cost_label_simple), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.OnSurfaceVariant)
                     }
                 }
             }
@@ -476,7 +536,8 @@ private fun PieChart(slices: List<CostDistributionSlice>, modifier: Modifier = M
 /* ---------------- Profitability trend (line chart) ---------------- */
 
 @Composable
-private fun ProfitabilityTrendSection(deltaLabel: String, trend: List<TrendPoint>) {
+private fun ProfitabilityTrendSection(deltaLabel: String, trend: List<TrendPoint>, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CaeColors.White),
@@ -489,7 +550,7 @@ private fun ProfitabilityTrendSection(deltaLabel: String, trend: List<TrendPoint
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TENDANCE DE RENTABILITÉ",
+                    text = stringResource(if (isPro) R.string.stats_trend_title else R.string.stats_trend_title_simple),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.6.sp,

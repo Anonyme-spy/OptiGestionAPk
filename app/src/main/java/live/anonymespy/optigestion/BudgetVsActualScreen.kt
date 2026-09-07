@@ -43,7 +43,7 @@ fun BudgetVsActualScreen() {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        HeaderRow(periodLabel = AppRepository.periodLabel)
+        HeaderRow(periodLabel = AppRepository.periodLabel, appMode = AppRepository.appMode)
 
         Spacer(Modifier.height(24.dp))
 
@@ -64,7 +64,8 @@ fun BudgetVsActualScreen() {
                 categories = categories,
                 onActualChanged = { AppRepository.persist() },
                 onAddCategory = { showAddDialog = true },
-                onDeleteCategory = { AppRepository.deleteBudgetCategory(it) }
+                onDeleteCategory = { AppRepository.deleteBudgetCategory(it) },
+                appMode = AppRepository.appMode
             )
         }
 
@@ -74,10 +75,11 @@ fun BudgetVsActualScreen() {
     if (showAddDialog) {
         AddCategoryDialog(
             onDismiss = { showAddDialog = false },
-            onSave = { name, icon, amount ->
-                AppRepository.addBudgetCategory(name, icon, amount)
+            onSave = { name, icon, amount, ledgerAccount ->
+                AppRepository.addBudgetCategory(name, icon, amount, ledgerAccount)
                 showAddDialog = false
-            }
+            },
+            appMode = AppRepository.appMode
         )
     }
 }
@@ -85,11 +87,12 @@ fun BudgetVsActualScreen() {
 /* ---------------- Header ---------------- */
 
 @Composable
-private fun HeaderRow(periodLabel: String) {
+private fun HeaderRow(periodLabel: String, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     Column {
-        Text(text = stringResource(R.string.budget_header_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        Text(text = stringResource(if (isPro) R.string.budget_header_title else R.string.budget_header_title_simple), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
         Text(
-            text = stringResource(R.string.budget_header_subtitle_format, periodLabel),
+            text = stringResource(if (isPro) R.string.budget_header_subtitle_format else R.string.budget_header_subtitle_format_simple, periodLabel),
             fontSize = 14.sp,
             color = CaeColors.OnSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
@@ -204,7 +207,8 @@ private fun CategoryBreakdownCard(
     categories: List<BudgetCategoryUi>,
     onActualChanged: () -> Unit,
     onAddCategory: () -> Unit,
-    onDeleteCategory: (String) -> Unit
+    onDeleteCategory: (String) -> Unit,
+    appMode: AppMode
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -228,7 +232,7 @@ private fun CategoryBreakdownCard(
             val referenceMax = (categories.maxOfOrNull { it.budgetAmount } ?: 1.0) * 1.2
 
             categories.forEachIndexed { index, state ->
-                CategoryRow(state = state, referenceMax = referenceMax, onActualChanged = onActualChanged, onDelete = { onDeleteCategory(state.id) })
+                CategoryRow(state = state, referenceMax = referenceMax, onActualChanged = onActualChanged, onDelete = { onDeleteCategory(state.id) }, appMode = appMode)
                 if (index != categories.lastIndex) Spacer(Modifier.height(20.dp))
             }
         }
@@ -236,7 +240,8 @@ private fun CategoryBreakdownCard(
 }
 
 @Composable
-private fun CategoryRow(state: BudgetCategoryUi, referenceMax: Double, onActualChanged: () -> Unit, onDelete: () -> Unit) {
+private fun CategoryRow(state: BudgetCategoryUi, referenceMax: Double, onActualChanged: () -> Unit, onDelete: () -> Unit, appMode: AppMode) {
+    val isPro = appMode == AppMode.PRO
     val budgetAmount = state.budgetAmount
     val actualAmount = state.actualAmount
     val variancePercent = if (budgetAmount != 0.0) ((actualAmount - budgetAmount) / budgetAmount) * 100 else 0.0
@@ -254,7 +259,12 @@ private fun CategoryRow(state: BudgetCategoryUi, referenceMax: Double, onActualC
                     Icon(imageVector = state.icon.toImageVector(), contentDescription = null, tint = CaeColors.Primary, modifier = Modifier.size(18.dp))
                 }
                 Spacer(Modifier.width(12.dp))
-                Text(text = state.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+                Column {
+                    Text(text = state.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+                    if (isPro && state.ledgerAccount.isNotBlank()) {
+                        Text(text = "Compte: ${state.ledgerAccount}", fontSize = 11.sp, color = CaeColors.OnSurfaceVariant)
+                    }
+                }
                 IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
                     Icon(imageVector = Icons.Filled.Close, contentDescription = "Supprimer", tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(14.dp))
                 }
@@ -309,12 +319,14 @@ private fun BudgetCategoryIcon.toImageVector(): ImageVector = when (this) {
 /* ---------------- Add category dialog ---------------- */
 
 @Composable
-private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCategoryIcon, Double) -> Unit) {
+private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCategoryIcon, Double, String) -> Unit, appMode: AppMode) {
     var name by remember { mutableStateOf("") }
     var budgetText by remember { mutableStateOf("") }
     var icon by remember { mutableStateOf(BudgetCategoryIcon.OTHER) }
+    var ledgerAccount by remember { mutableStateOf("") }
     var iconMenuExpanded by remember { mutableStateOf(false) }
 
+    val isPro = appMode == AppMode.PRO
     val isValid = name.isNotBlank() && (budgetText.toDoubleOrNull() ?: 0.0) > 0.0
 
     AlertDialog(
@@ -323,6 +335,18 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCate
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.form_label_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                if (isPro) {
+                    OutlinedTextField(
+                        value = ledgerAccount,
+                        onValueChange = { ledgerAccount = it },
+                        label = { Text(stringResource(R.string.form_label_ledger_account)) },
+                        placeholder = { Text(stringResource(R.string.form_label_ledger_account_example)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 OutlinedTextField(
                     value = budgetText,
                     onValueChange = { budgetText = it.filter { c -> c.isDigit() } },
@@ -357,7 +381,7 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCate
             }
         },
         confirmButton = {
-            TextButton(enabled = isValid, onClick = { onSave(name.trim(), icon, budgetText.toDoubleOrNull() ?: 0.0) }) { Text(stringResource(R.string.save)) }
+            TextButton(enabled = isValid, onClick = { onSave(name.trim(), icon, budgetText.toDoubleOrNull() ?: 0.0, ledgerAccount.trim()) }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )

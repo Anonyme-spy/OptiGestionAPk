@@ -83,9 +83,22 @@ data class SheetEntry(
     val isCredit: Boolean = false,
     val costCenterCode: String,
     val status: EntryStatus,
-    val timestampMillis: Long = System.currentTimeMillis()
+    val timestampMillis: Long = System.currentTimeMillis(),
+    // Professional fields (Pro mode only)
+    val taxRate: Double = 0.0,
+    val isTtc: Boolean = true,
+    val ledgerAccount: String = ""
 ) {
     val amountLabel: String get() = (if (isCredit) "+" else "-") + formatCurrency(amount)
+
+    /** Returns the amount excluding tax (HT). If isTtc is true, it decalculates tax. */
+    val amountHt: Double get() = if (isTtc && taxRate > 0) amount / (1 + (taxRate / 100)) else amount
+
+    /** Returns the amount including tax (TTC). If isTtc is false, it adds tax to the base amount. */
+    val amountTtc: Double get() = if (!isTtc && taxRate > 0) amount * (1 + (taxRate / 100)) else amount
+
+    /** The tax component (TVA). */
+    val taxAmount: Double get() = amountTtc - amountHt
 }
 
 /* ============================================================
@@ -107,10 +120,12 @@ class BudgetCategoryUi(
     val name: String,
     val icon: BudgetCategoryIcon,
     budgetAmount: Double,
-    initialActual: Double = 0.0
+    initialActual: Double = 0.0,
+    ledgerAccount: String = ""
 ) {
     var budgetAmount by mutableStateOf(budgetAmount)
     var actualInput by mutableStateOf(if (initialActual == 0.0) "" else initialActual.toLong().toString())
+    var ledgerAccount by mutableStateOf(ledgerAccount)
     val actualAmount: Double get() = actualInput.toDoubleOrNull() ?: 0.0
 }
 

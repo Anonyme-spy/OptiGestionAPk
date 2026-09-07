@@ -1,5 +1,30 @@
 # OptiGestion — mise à niveau "vraie app de gestion financière"
 
+## Round 7 — Expérience Dual-Mode : Simple vs Pro
+
+### Double expérience utilisateur
+L'application propose désormais deux modes distincts pour s'adapter au profil de l'utilisateur, sans mélanger les usages.
+
+- **Mode Simplifié (Simple)** : Destiné aux particuliers ou aux petites activités. Utilise un langage courant ("Objectifs" au lieu de "Budget", "Dépenses moyennes" au lieu de "Burn Rate") et masque les champs complexes.
+- **Mode Professionnel (Pro)** : Une véritable comptabilité analytique d'entreprise avec gestion de la TVA, comptes comptables et analyse de résultat.
+
+### Nouveautés du Mode Pro (Comptabilité Générale)
+- **Support TVA (HT/TTC)** : Les écritures supportent désormais un taux de TVA et une bascule HT/TTC. L'app calcule automatiquement les composantes taxes.
+- **Comptes Comptables** : Ajout d'un champ "Compte" (ex: 606 - Fournitures) sur les écritures et les catégories budgétaires pour l'imputation comptable.
+- **Analyse P&L (Profit & Loss)** : Nouveau bloc dans les Rapports présentant le Résultat d'Exploitation (HT) et le détail de la TVA (Collectée vs Déductible).
+- **Indicateurs HT** : En mode Pro, les KPI de marge et de coûts basculent sur des valeurs Hors Taxes pour une analyse de rentabilité fidèle.
+- **Export CSV étendu** : Le fichier exporté inclut toutes les nouvelles colonnes comptables (Compte, Taux TVA, Montant HT).
+
+### Nouveautés du Mode Simple (Usage Quotidien)
+- **Simplification terminologique** : Remplacement du jargon expert par des termes accessibles ("Mes Projets", "Ma Survie Estimée", etc.).
+- **Interface minimaliste** : Masquage des statuts d'approbation et des champs fiscaux pour une saisie ultra-rapide.
+- **Focus sur le Cash** : Tous les indicateurs restent en TTC (ce qui est réellement payé/reçu).
+
+### Évolution de l'Onboarding
+- **Sélecteur de Mode** : Un nouveau parcours d'accueil permet de choisir son niveau d'expertise avant de configurer ses données.
+- **Données de Modèle (Templates)** : Chaque mode dispose de son propre jeu de données d'exemple (dépenses ménagères pour Simple, infrastructure IT pour Pro).
+- **Réinitialisation Intelligente** : Le bouton "Réinitialiser" renvoie désormais au choix du mode, permettant de basculer d'une expérience à l'autre proprement.
+
 ## Round 6 — Infrastructure : support JDK 25 et Gradle 9.7.1
 
 ### Mise à jour de l'environnement de build

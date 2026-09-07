@@ -35,8 +35,8 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 fun OptiGestionRoot(isWideScreen: Boolean = false) {
     if (!AppRepository.hasChosenSetup) {
         OnboardingScreen(
-            onLoadTemplate = { AppRepository.loadTemplate() },
-            onStartEmpty = { AppRepository.startEmpty() }
+            onLoadTemplate = { mode -> AppRepository.loadTemplate(mode) },
+            onStartEmpty = { mode -> AppRepository.startEmpty(mode) }
         )
     } else {
         CaeAnalyticsApp(isWideScreen = isWideScreen)
@@ -134,22 +134,28 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
 
 /** Localized label for the bottom nav / side rail. */
 @Composable
-fun NavDestination.navLabel(): String = when (this) {
-    NavDestination.DASHBOARD -> stringResource(R.string.nav_dashboard)
-    NavDestination.SHEETS -> stringResource(R.string.nav_sheets)
-    NavDestination.ANALYSIS -> stringResource(R.string.nav_budget)
-    NavDestination.COST_CENTERS -> stringResource(R.string.nav_cost_centers)
-    NavDestination.STATS -> stringResource(R.string.nav_reports)
+fun NavDestination.navLabel(): String {
+    val isPro = AppRepository.appMode == AppMode.PRO
+    return when (this) {
+        NavDestination.DASHBOARD -> stringResource(R.string.nav_dashboard)
+        NavDestination.SHEETS -> stringResource(R.string.nav_sheets)
+        NavDestination.ANALYSIS -> stringResource(if (isPro) R.string.nav_budget else R.string.nav_budget_simple)
+        NavDestination.COST_CENTERS -> stringResource(if (isPro) R.string.nav_cost_centers else R.string.nav_cost_centers_simple)
+        NavDestination.STATS -> stringResource(if (isPro) R.string.nav_reports else R.string.nav_reports_simple)
+    }
 }
 
 /** Localized title shown in the shared top app bar. */
 @Composable
-fun NavDestination.topBarTitle(): String = when (this) {
-    NavDestination.DASHBOARD -> stringResource(R.string.top_bar_dashboard)
-    NavDestination.SHEETS -> stringResource(R.string.top_bar_sheets)
-    NavDestination.ANALYSIS -> stringResource(R.string.top_bar_budget)
-    NavDestination.COST_CENTERS -> stringResource(R.string.top_bar_cost_centers)
-    NavDestination.STATS -> stringResource(R.string.top_bar_reports)
+fun NavDestination.topBarTitle(): String {
+    val isPro = AppRepository.appMode == AppMode.PRO
+    return when (this) {
+        NavDestination.DASHBOARD -> stringResource(R.string.top_bar_dashboard)
+        NavDestination.SHEETS -> stringResource(R.string.top_bar_sheets)
+        NavDestination.ANALYSIS -> stringResource(if (isPro) R.string.top_bar_budget else R.string.top_bar_budget_simple)
+        NavDestination.COST_CENTERS -> stringResource(if (isPro) R.string.top_bar_cost_centers else R.string.top_bar_cost_centers_simple)
+        NavDestination.STATS -> stringResource(if (isPro) R.string.top_bar_reports else R.string.top_bar_reports_simple)
+    }
 }
 
 /* ============================================================
