@@ -10,24 +10,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Navigation — bottom nav / side rail labels -->
     <string name="app_name">OptiGestion</string>
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_sheets">Sheets</string>
+    <string name="nav_dashboard">Vue d\'ensemble</string>
+    <string name="nav_sheets">Écritures</string>
     <string name="nav_budget">Budget</string>
     <string name="nav_budget_simple">Objectifs</string>
     <string name="nav_cost_centers">Centres</string>
     <string name="nav_cost_centers_simple">Projets</string>
     <string name="nav_reports">Rapports</string>
     <string name="nav_reports_simple">Mon Bilan</string>
+    <string name="nav_profile">Mon Profil</string>
 
     <!-- Navigation — top app bar titles per screen -->
-    <string name="top_bar_dashboard">CAE Analytics</string>
-    <string name="top_bar_sheets">Sheets</string>
-    <string name="top_bar_budget">Budget vs Réalisé</string>
+    <string name="top_bar_dashboard">Vue d\'ensemble</string>
+    <string name="top_bar_sheets">Écritures (Sheets)</string>
+    <string name="top_bar_budget">Suivi Budget</string>
     <string name="top_bar_budget_simple">Mes Objectifs</string>
     <string name="top_bar_cost_centers">Centres de Coût</string>
     <string name="top_bar_cost_centers_simple">Mes Projets</string>
-    <string name="top_bar_reports">Rapports</string>
+    <string name="top_bar_reports">Analytique &amp; Rapports</string>
     <string name="top_bar_reports_simple">Mon Bilan</string>
+    <string name="top_bar_profile">Profil Utilisateur</string>
     <string name="top_bar_settings">Paramètres</string>
 
     <!-- Navigation — overflow menu + reset dialog -->
@@ -52,7 +54,49 @@
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Bienvenue dans OptiGestion</string>
-    <string name="onboarding_welcome_subtitle">Comment voulez-vous démarrer votre comptabilité analytique ?</string>
+    <string name="onboarding_welcome_subtitle">Connectez-vous ou démarrez une session anonyme.</string>
+    <string name="onboarding_start_guest">Continuer en tant qu\'invité</string>
+    <string name="onboarding_start_guest_desc">Session locale uniquement. Pas de sauvegarde cloud.</string>
+    <string name="onboarding_login">Se connecter</string>
+    <string name="onboarding_signup">Créer un compte</string>
+    <string name="onboarding_form_email">Email</string>
+    <string name="onboarding_form_password">Mot de passe</string>
+    <string name="onboarding_form_name">Nom complet / Pseudo</string>
+    <string name="onboarding_company_title">Votre Entreprise</string>
+    <string name="onboarding_company_name_label">Nom de la société</string>
+    <string name="onboarding_company_reg_label">Numéro d\'immatriculation (Optionnel)</string>
+    <string name="onboarding_company_industry_label">Secteur d\'activité</string>
+    <string name="onboarding_finish">Terminer la configuration</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Mon Profil</string>
+    <string name="profile_subtitle">Gérez vos informations personnelles et de compte.</string>
+    <string name="profile_section_personal">Informations Personnelles</string>
+    <string name="profile_section_account">Détails du Compte</string>
+    <string name="profile_section_company">Informations Société</string>
+    <string name="profile_label_display_name">Nom d\'affichage</string>
+    <string name="profile_label_email">Adresse Email</string>
+    <string name="profile_label_phone">Téléphone</string>
+    <string name="profile_label_avatar_url">URL de l\'Avatar</string>
+    <string name="profile_label_member_since">Membre depuis</string>
+    <string name="profile_label_company_name">Nom de l\'entreprise</string>
+    <string name="profile_label_company_industry">Secteur</string>
+    <string name="profile_edit_success">Profil mis à jour avec succès</string>
+    <string name="profile_save_changes">Enregistrer les modifications</string>
+    <string name="onboarding_type_particulier">Compte Personnel</string>
+    <string name="onboarding_type_particulier_desc">Gérez vos finances personnelles ou votre activité d\'indépendant en toute simplicité.</string>
+    <string name="onboarding_type_entreprise">Compte Entreprise</string>
+    <string name="onboarding_type_entreprise_desc">Travaillez en équipe avec des rôles définis (RH, Comptabilité, Employé).</string>
+    <string name="onboarding_role_title">Choisissez votre rôle</string>
+    <string name="onboarding_role_admin">Administrateur</string>
+    <string name="onboarding_role_admin_desc">Accès complet à tous les paramètres et données financières.</string>
+    <string name="onboarding_role_rh">Ressources Humaines (RH)</string>
+    <string name="onboarding_role_rh_desc">Gestion des frais de personnel et approbations RH.</string>
+    <string name="onboarding_role_comptable">Comptabilité</string>
+    <string name="onboarding_role_comptable_desc">Suivi budgétaire précis et clôture des écritures.</string>
+    <string name="onboarding_role_employe">Employé</string>
+    <string name="onboarding_role_employe_desc">Saisie simplifiée de vos notes de frais et consultation limitée.</string>
+    <string name="onboarding_mode_title">Niveau d\'expertise</string>
     <string name="onboarding_mode_simple">Mode Simplifié</string>
     <string name="onboarding_mode_simple_desc">Idéal pour les particuliers ou petites activités. Termes simples, pas de jargon comptable.</string>
     <string name="onboarding_mode_pro">Mode Professionnel</string>
@@ -75,6 +119,9 @@
     <string name="settings_cash_subtitle">Utilisée pour calculer votre autonomie financière (runway) sur le Dashboard et les Rapports.</string>
     <string name="settings_cash_label">Trésorerie disponible</string>
     <string name="settings_cash_helper">Utilisée pour le calcul du runway</string>
+    <string name="settings_personalization">Personnalisation</string>
+    <string name="settings_personalization_subtitle">Choisissez l\'icône de votre application dans la barre de titre.</string>
+    <string name="settings_app_logo_label">Icône de l\'app</string>
     <string name="settings_data">Données</string>
     <string name="settings_data_subtitle">Exportez l\'ensemble de vos écritures au format CSV, exploitable dans Excel ou Google Sheets.</string>
     <string name="settings_export_csv">Exporter toutes les écritures (CSV)</string>

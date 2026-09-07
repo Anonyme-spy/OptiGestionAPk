@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 fun SheetsScreen() {
     val context = LocalContext.current
     val entries = AppRepository.entries
+    val currentUser = AppRepository.currentUser
 
     var statusFilter by remember { mutableStateOf<EntryStatus?>(null) }
     var sortDescending by remember { mutableStateOf(true) }
@@ -43,9 +44,16 @@ fun SheetsScreen() {
     var showAddDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val visibleEntries = remember(entries.toList(), statusFilter, sortDescending, searchQuery) {
+    val visibleEntries = remember(entries.toList(), statusFilter, sortDescending, searchQuery, currentUser) {
         entries
             .filter { statusFilter == null || it.status == statusFilter }
+            .filter {
+                // Roles logic
+                when (currentUser?.enterpriseRole) {
+                    EnterpriseRole.EMPLOYE -> it.createdByUserId == currentUser.id
+                    else -> true // Admin/RH/Particulier see all
+                }
+            }
             .filter {
                 searchQuery.isBlank() ||
                     it.category.contains(searchQuery, ignoreCase = true) ||
@@ -561,7 +569,8 @@ private fun EntryFormDialog(
                             timestampMillis = initial?.timestampMillis ?: System.currentTimeMillis(),
                             taxRate = taxRateText.toDoubleOrNull() ?: 0.0,
                             isTtc = isTtc,
-                            ledgerAccount = ledgerAccount.trim()
+                            ledgerAccount = ledgerAccount.trim(),
+                            createdByUserId = initial?.createdByUserId ?: AppRepository.currentUser?.id ?: ""
                         )
                     )
                 }

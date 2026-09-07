@@ -7,6 +7,12 @@ import androidx.compose.ui.graphics.Color
 import java.util.UUID
 
 /* ============================================================
+ *  COMMON
+ * ============================================================ */
+
+enum class SyncStatus { SYNCED, PENDING, ERROR }
+
+/* ============================================================
  *  NAVIGATION
  * ============================================================ */
 
@@ -21,7 +27,8 @@ enum class NavDestination(val route: String) {
     SHEETS("sheets"),
     ANALYSIS("analysis"),       // -> Budget vs Réalisé screen
     COST_CENTERS("cost_centers"), // -> Cost Centers screen
-    STATS("stats")               // -> Analytics & Reports screen
+    STATS("stats"),               // -> Analytics & Reports screen
+    PROFILE("profile")           // -> User Profile screen
 }
 
 /* ============================================================
@@ -87,7 +94,11 @@ data class SheetEntry(
     // Professional fields (Pro mode only)
     val taxRate: Double = 0.0,
     val isTtc: Boolean = true,
-    val ledgerAccount: String = ""
+    val ledgerAccount: String = "",
+    val createdByUserId: String = "",
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val version: Int = 1,
+    val updatedAtMillis: Long = System.currentTimeMillis()
 ) {
     val amountLabel: String get() = (if (isCredit) "+" else "-") + formatCurrency(amount)
 
@@ -121,7 +132,11 @@ class BudgetCategoryUi(
     val icon: BudgetCategoryIcon,
     budgetAmount: Double,
     initialActual: Double = 0.0,
-    ledgerAccount: String = ""
+    ledgerAccount: String = "",
+    var syncStatus: SyncStatus = SyncStatus.SYNCED,
+    var version: Int = 1,
+    var createdByUserId: String = "",
+    var updatedAtMillis: Long = System.currentTimeMillis()
 ) {
     var budgetAmount by mutableStateOf(budgetAmount)
     var actualInput by mutableStateOf(if (initialActual == 0.0) "" else initialActual.toLong().toString())
@@ -156,7 +171,11 @@ data class CostCenter(
     val name: String,
     val icon: DepartmentIcon,
     /** 0 for pure revenue centers (e.g. Sales) where "over budget" doesn't apply. */
-    val monthlyBudget: Double
+    val monthlyBudget: Double,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val version: Int = 1,
+    val createdByUserId: String = "",
+    val updatedAtMillis: Long = System.currentTimeMillis()
 )
 
 enum class CostCenterFootnoteIcon { NONE, TRENDING_DOWN, WARNING }

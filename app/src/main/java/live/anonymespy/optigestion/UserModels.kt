@@ -19,38 +19,51 @@ package live.anonymespy.optigestion
  *   role that controls what they can see/edit (see [EnterpriseRole]).
  */
 
-enum class AccountType { PARTICULIER, ENTREPRISE }
-
 /**
- * Only meaningful when [User.accountType] is [AccountType.ENTREPRISE].
- * - ADMIN: full access — manage cost centers, budgets, users, settings.
- * - RH: HR-scoped — likely payroll/labor cost centers, not full financials.
- * - EMPLOYE: submits entries (e.g. expense claims) for approval, limited
- *   read access to company-wide dashboards.
- *
- * Exact permission boundaries are a backend/API decision (see
- * BACKEND_ROADMAP.md § Roles & permissions) — this enum only names the
- * three roles so the client can branch its UI once accounts exist.
+ * Account kinds:
+ * - GUEST: Anonymous local session. No email required. Data stays on device.
+ * - PARTICULIER: Personal account synced to cloud.
+ * - ENTREPRISE: Organization account with multi-user roles.
  */
-enum class EnterpriseRole { ADMIN, RH, EMPLOYE }
+enum class AccountType { GUEST, PARTICULIER, ENTREPRISE }
 
 /**
- * A signed-in user, as the future API would return it. [companyId] is
- * null for PARTICULIER accounts and set for ENTREPRISE accounts;
- * [enterpriseRole] is null for PARTICULIER accounts.
+ * Roles for Enterprise accounts.
+ * - OWNER: The person who created the company. Full legal/admin rights.
+ * - ADMIN: Manages organization, users, and financials.
+ * - RH: Personnel costs, approvals, and labor budgets.
+ * - COMPTABLE: Full financial visibility, VAT, and period closing.
+ * - EMPLOYE: Submission only (expense claims).
+ */
+enum class EnterpriseRole { OWNER, ADMIN, RH, COMPTABLE, EMPLOYE }
+
+/**
+ * A user profile.
  */
 data class User(
     val id: String,
-    val email: String,
+    val email: String? = null,
     val displayName: String,
     val accountType: AccountType,
     val companyId: String? = null,
     val companyName: String? = null,
-    val enterpriseRole: EnterpriseRole? = null
+    val companyIndustry: String? = null,
+    val enterpriseRole: EnterpriseRole? = null,
+    val phone: String? = null,
+    val avatarUrl: String? = null,
+    val jobTitle: String? = null,
+    val bio: String? = null,
+    val createdAtMillis: Long = System.currentTimeMillis()
 )
 
-/** A company/organization — the shared workspace for ENTREPRISE users. */
+/** A company/organization. */
 data class Company(
     val id: String,
-    val name: String
+    val name: String,
+    val registrationNumber: String? = null, // e.g. SIRET/SIREN
+    val industry: String? = null,
+    val address: String? = null,
+    val website: String? = null,
+    val taxId: String? = null,
+    val ownerId: String
 )

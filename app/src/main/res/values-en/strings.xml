@@ -2,24 +2,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">OptiGestion</string>
     <!-- Navigation — bottom nav / side rail labels -->
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_sheets">Sheets</string>
+    <string name="nav_dashboard">Overview</string>
+    <string name="nav_sheets">Entries</string>
     <string name="nav_budget">Budget</string>
     <string name="nav_budget_simple">Goals</string>
     <string name="nav_cost_centers">Centers</string>
     <string name="nav_cost_centers_simple">Projects</string>
     <string name="nav_reports">Reports</string>
     <string name="nav_reports_simple">My Summary</string>
+    <string name="nav_profile">My Profile</string>
 
     <!-- Navigation — top app bar titles per screen -->
-    <string name="top_bar_dashboard">CAE Analytics</string>
-    <string name="top_bar_sheets">Sheets</string>
-    <string name="top_bar_budget">Budget vs Actual</string>
+    <string name="top_bar_dashboard">Overview</string>
+    <string name="top_bar_sheets">Entries (Sheets)</string>
+    <string name="top_bar_budget">Budget Tracking</string>
     <string name="top_bar_budget_simple">My Goals</string>
     <string name="top_bar_cost_centers">Cost Centers</string>
     <string name="top_bar_cost_centers_simple">My Projects</string>
-    <string name="top_bar_reports">Reports</string>
+    <string name="top_bar_reports">Analytics &amp; Reports</string>
     <string name="top_bar_reports_simple">My Summary</string>
+    <string name="top_bar_profile">User Profile</string>
     <string name="top_bar_settings">Settings</string>
 
     <!-- Navigation — overflow menu + reset dialog -->
@@ -44,7 +46,49 @@
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to OptiGestion</string>
-    <string name="onboarding_welcome_subtitle">How would you like to start your managerial accounting?</string>
+    <string name="onboarding_welcome_subtitle">Sign in or start an anonymous session.</string>
+    <string name="onboarding_start_guest">Continue as Guest</string>
+    <string name="onboarding_start_guest_desc">Local session only. No cloud backup.</string>
+    <string name="onboarding_login">Log In</string>
+    <string name="onboarding_signup">Create Account</string>
+    <string name="onboarding_form_email">Email</string>
+    <string name="onboarding_form_password">Password</string>
+    <string name="onboarding_form_name">Full Name / Display Name</string>
+    <string name="onboarding_company_title">Your Business</string>
+    <string name="onboarding_company_name_label">Company Name</string>
+    <string name="onboarding_company_reg_label">Registration Number (Optional)</string>
+    <string name="onboarding_company_industry_label">Industry / Sector</string>
+    <string name="onboarding_finish">Finish Setup</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_subtitle">Manage your personal and account information.</string>
+    <string name="profile_section_personal">Personal Information</string>
+    <string name="profile_section_account">Account Details</string>
+    <string name="profile_section_company">Company Information</string>
+    <string name="profile_label_display_name">Display Name</string>
+    <string name="profile_label_email">Email Address</string>
+    <string name="profile_label_phone">Phone Number</string>
+    <string name="profile_label_avatar_url">Avatar URL</string>
+    <string name="profile_label_member_since">Member Since</string>
+    <string name="profile_label_company_name">Company Name</string>
+    <string name="profile_label_company_industry">Industry</string>
+    <string name="profile_edit_success">Profile updated successfully</string>
+    <string name="profile_save_changes">Save Changes</string>
+    <string name="onboarding_type_particulier">Personal Account</string>
+    <string name="onboarding_type_particulier_desc">Manage your personal finances or freelance activity with ease.</string>
+    <string name="onboarding_type_entreprise">Business Account</string>
+    <string name="onboarding_type_entreprise_desc">Work as a team with defined roles (HR, Accounting, Employee).</string>
+    <string name="onboarding_role_title">Choose your role</string>
+    <string name="onboarding_role_admin">Administrator</string>
+    <string name="onboarding_role_admin_desc">Full access to all settings and financial data.</string>
+    <string name="onboarding_role_rh">Human Resources (HR)</string>
+    <string name="onboarding_role_rh_desc">Manage personnel costs and HR approvals.</string>
+    <string name="onboarding_role_comptable">Accounting</string>
+    <string name="onboarding_role_comptable_desc">Precise budget tracking and entry closing.</string>
+    <string name="onboarding_role_employe">Employee</string>
+    <string name="onboarding_role_employe_desc">Simplified entry for your expense claims and limited view.</string>
+    <string name="onboarding_mode_title">Expertise Level</string>
     <string name="onboarding_mode_simple">Simple Mode</string>
     <string name="onboarding_mode_simple_desc">Ideal for individuals or small activities. Simple terms, no accounting jargon.</string>
     <string name="onboarding_mode_pro">Professional Mode</string>
@@ -67,6 +111,9 @@
     <string name="settings_cash_subtitle">Used to calculate your cash runway on the Dashboard and Reports.</string>
     <string name="settings_cash_label">Cash on hand</string>
     <string name="settings_cash_helper">Used for the runway calculation</string>
+    <string name="settings_personalization">Personalization</string>
+    <string name="settings_personalization_subtitle">Choose your application icon in the title bar.</string>
+    <string name="settings_app_logo_label">App Icon</string>
     <string name="settings_data">Data</string>
     <string name="settings_data_subtitle">Export all your entries as CSV, ready for Excel or Google Sheets.</string>
     <string name="settings_export_csv">Export all entries (CSV)</string>

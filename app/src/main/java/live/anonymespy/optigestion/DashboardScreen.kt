@@ -51,7 +51,9 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
-        Text(text = stringResource(R.string.dashboard_title), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
+        val user = AppRepository.currentUser
+        val greeting = if (user != null) "Bonjour, ${user.displayName}" else stringResource(R.string.dashboard_title)
+        Text(text = greeting, fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = CaeColors.Primary)
 
         Spacer(Modifier.height(16.dp))
 
@@ -64,6 +66,12 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
             }
 
             HeroMarginCard(netMargin = netMargin, revenue = revenue, costs = costs, appMode = AppRepository.appMode)
+
+            val isPro = AppRepository.appMode == AppMode.PRO
+            if (isPro) {
+                Spacer(Modifier.height(16.dp))
+                VatStatusCard(liability = AppRepository.vatLiability())
+            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -268,6 +276,33 @@ private fun BudgetAlertBanner(alerts: List<BudgetAlert>, onClick: () -> Unit) {
                 )
             }
             Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null, tint = CaeColors.OnErrorContainer, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun VatStatusCard(liability: Double) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CaeColors.SurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(32.dp).clip(CircleShape).background(CaeColors.TertiaryContainer.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.AccountBalanceWallet, contentDescription = null, tint = CaeColors.OnTertiaryContainer, modifier = Modifier.size(18.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = "TVA À PAYER (ESTIMATION)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnSurfaceVariant)
+                Text(text = formatCurrency(liability), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = if (liability > 0) CaeColors.Error else CaeColors.OnTertiaryContainer)
+            }
         }
     }
 }

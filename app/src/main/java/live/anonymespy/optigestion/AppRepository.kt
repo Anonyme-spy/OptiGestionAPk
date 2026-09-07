@@ -35,6 +35,8 @@ object AppRepository {
     private const val KEY_CASH_ON_HAND = "cash_on_hand"
     private const val KEY_LANGUAGE = "language"
     private const val KEY_APP_MODE = "app_mode"
+    private const val KEY_USER_JSON = "user_json"
+    private const val KEY_APP_LOGO = "app_logo"
 
     private lateinit var prefs: SharedPreferences
 
@@ -60,6 +62,14 @@ object AppRepository {
 
     /** The current UI mode (Simple vs Pro). */
     var appMode by mutableStateOf(AppMode.PRO)
+        private set
+
+    /** The current logged-in user profile (mocked). */
+    var currentUser by mutableStateOf<User?>(null)
+        private set
+
+    /** App logo / icon identifier. Could be a resource name or a local file URI. */
+    var appLogo by mutableStateOf("default")
         private set
 
     /** The transactional ledger shown on the Sheets screen. Empty by default. */
@@ -90,11 +100,32 @@ object AppRepository {
         prefs.getString(KEY_APP_MODE, null)?.let { saved ->
             appMode = runCatching { AppMode.valueOf(saved) }.getOrDefault(AppMode.PRO)
         }
+        prefs.getString(KEY_USER_JSON, null)?.let { json ->
+            currentUser = runCatching {
+                val o = JSONObject(json)
+                User(
+                    id = o.getString("id"),
+                    email = o.optString("email").takeIf { it.isNotEmpty() },
+                    displayName = o.getString("displayName"),
+                    accountType = AccountType.valueOf(o.getString("accountType")),
+                    companyId = o.optString("companyId").takeIf { it.isNotEmpty() },
+                    companyName = o.optString("companyName").takeIf { it.isNotEmpty() },
+                    companyIndustry = o.optString("companyIndustry").takeIf { it.isNotEmpty() },
+                    enterpriseRole = o.optString("enterpriseRole").takeIf { it.isNotEmpty() }?.let { EnterpriseRole.valueOf(it) },
+                    phone = o.optString("phone").takeIf { it.isNotEmpty() },
+                    avatarUrl = o.optString("avatarUrl").takeIf { it.isNotEmpty() },
+                    jobTitle = o.optString("jobTitle").takeIf { it.isNotEmpty() },
+                    bio = o.optString("bio").takeIf { it.isNotEmpty() },
+                    createdAtMillis = o.optLong("createdAtMillis", System.currentTimeMillis())
+                )
+            }.getOrNull()
+        }
         // Bootstrap: make sure the per-app locale matches our saved preference on
         // cold start (covers the very first run after this feature ships, before
         // AppCompatDelegate has its own record of a choice). selectLanguage()
         // keeps the two in sync from here on for every subsequent change.
         applyAppLanguage(language)
+        appLogo = prefs.getString(KEY_APP_LOGO, "default") ?: "default"
         hasChosenSetup = prefs.getBoolean(KEY_INITIALIZED, false)
         if (hasChosenSetup) restoreFromPrefs()
     }
@@ -124,9 +155,31 @@ object AppRepository {
         applyAppLanguage(newLanguage)
     }
 
+    /** App logo is a device setting. */
+    fun selectAppLogo(logo: String) {
+        appLogo = logo
+        if (::prefs.isInitialized) prefs.edit().putString(KEY_APP_LOGO, logo).apply()
+    }
+
+    /** Updates the current user profile and persists it. */
+    fun updateUserProfile(updated: User) {
+        this.currentUser = updated
+        persist()
+    }
+
     /* ---------------- Onboarding ---------------- */
 
-    fun loadTemplate(mode: AppMode) {
+    fun completeOnboarding(user: User, mode: AppMode, useTemplate: Boolean) {
+        this.currentUser = user
+        this.appMode = mode
+        if (useTemplate) {
+            loadTemplate(mode)
+        } else {
+            startEmpty(mode)
+        }
+    }
+
+    private fun loadTemplate(mode: AppMode) {
         appMode = mode
         entries.clear()
         if (mode == AppMode.PRO) {
@@ -163,6 +216,7 @@ object AppRepository {
         budgetCategories.clear()
         costCenters.clear()
         hasChosenSetup = false
+        currentUser = null
         prefs.edit()
             .remove(KEY_INITIALIZED)
             .remove(KEY_PERIOD)
@@ -170,13 +224,29 @@ object AppRepository {
             .remove(KEY_CATEGORIES)
             .remove(KEY_COST_CENTERS)
             .remove(KEY_APP_MODE)
+            .remove(KEY_USER_JSON)
             .apply()
+    }
+
+    /** Total TVA component (Collected - Deductible). */
+    fun vatLiability(): Double {
+        val collected = entries.filter { it.isCredit }.sumOf { it.taxAmount }
+        val deductible = entries.filter { !it.isCredit }.sumOf { it.taxAmount }
+        return collected - deductible
+    }
+
+    /** Count of items waiting to be synced. */
+    fun pendingSyncCount(): Int {
+        return entries.count { it.syncStatus == SyncStatus.PENDING } +
+               budgetCategories.count { it.syncStatus == SyncStatus.PENDING } +
+               costCenters.count { it.syncStatus == SyncStatus.PENDING }
     }
 
     /* ---------------- Sheets entries ---------------- */
 
     fun addEntry(entry: SheetEntry) {
-        entries.add(0, entry)
+        val toAdd = entry.copy(syncStatus = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING)
+        entries.add(0, toAdd)
         persist()
     }
 
@@ -194,7 +264,8 @@ object AppRepository {
     /* ---------------- Budget categories ---------------- */
 
     fun addBudgetCategory(name: String, icon: BudgetCategoryIcon, budgetAmount: Double, ledgerAccount: String = "") {
-        budgetCategories.add(BudgetCategoryUi(name = name, icon = icon, budgetAmount = budgetAmount, ledgerAccount = ledgerAccount))
+        val sync = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING
+        budgetCategories.add(BudgetCategoryUi(name = name, icon = icon, budgetAmount = budgetAmount, ledgerAccount = ledgerAccount, syncStatus = sync))
         persist()
     }
 
@@ -214,7 +285,8 @@ object AppRepository {
     /* ---------------- Cost centers ---------------- */
 
     fun addCostCenter(code: String, name: String, icon: DepartmentIcon, monthlyBudget: Double) {
-        costCenters.add(CostCenter(code = code, name = name, icon = icon, monthlyBudget = monthlyBudget))
+        val sync = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING
+        costCenters.add(CostCenter(code = code, name = name, icon = icon, monthlyBudget = monthlyBudget, syncStatus = sync))
         persist()
     }
 
@@ -301,6 +373,10 @@ object AppRepository {
                     put("taxRate", e.taxRate)
                     put("isTtc", e.isTtc)
                     put("ledgerAccount", e.ledgerAccount)
+                    put("createdByUserId", e.createdByUserId)
+                    put("syncStatus", e.syncStatus.name)
+                    put("version", e.version)
+                    put("updatedAtMillis", e.updatedAtMillis)
                 })
             }
         }
@@ -313,6 +389,10 @@ object AppRepository {
                     put("budgetAmount", c.budgetAmount)
                     put("actualInput", c.actualInput)
                     put("ledgerAccount", c.ledgerAccount)
+                    put("syncStatus", c.syncStatus.name)
+                    put("version", c.version)
+                    put("createdByUserId", c.createdByUserId)
+                    put("updatedAtMillis", c.updatedAtMillis)
                 })
             }
         }
@@ -324,6 +404,10 @@ object AppRepository {
                     put("name", cc.name)
                     put("icon", cc.icon.name)
                     put("monthlyBudget", cc.monthlyBudget)
+                    put("syncStatus", cc.syncStatus.name)
+                    put("version", cc.version)
+                    put("createdByUserId", cc.createdByUserId)
+                    put("updatedAtMillis", cc.updatedAtMillis)
                 })
             }
         }
@@ -334,6 +418,26 @@ object AppRepository {
             .putString(KEY_CATEGORIES, categoriesJson.toString())
             .putString(KEY_COST_CENTERS, costCentersJson.toString())
             .putString(KEY_APP_MODE, appMode.name)
+            .apply {
+                currentUser?.let { user ->
+                    val userJson = JSONObject().apply {
+                        put("id", user.id)
+                        put("email", user.email)
+                        put("displayName", user.displayName)
+                        put("accountType", user.accountType.name)
+                        put("companyId", user.companyId)
+                        put("companyName", user.companyName)
+                        put("companyIndustry", user.companyIndustry)
+                        put("enterpriseRole", user.enterpriseRole?.name)
+                        put("phone", user.phone)
+                        put("avatarUrl", user.avatarUrl)
+                        put("jobTitle", user.jobTitle)
+                        put("bio", user.bio)
+                        put("createdAtMillis", user.createdAtMillis)
+                    }
+                    putString(KEY_USER_JSON, userJson.toString())
+                }
+            }
             .apply()
     }
 
@@ -357,7 +461,11 @@ object AppRepository {
                         timestampMillis = o.getLong("timestampMillis"),
                         taxRate = o.optDouble("taxRate", 0.0),
                         isTtc = o.optBoolean("isTtc", true),
-                        ledgerAccount = o.optString("ledgerAccount", "")
+                        ledgerAccount = o.optString("ledgerAccount", ""),
+                        createdByUserId = o.optString("createdByUserId", ""),
+                        syncStatus = runCatching { SyncStatus.valueOf(o.optString("syncStatus")) }.getOrDefault(SyncStatus.SYNCED),
+                        version = o.optInt("version", 1),
+                        updatedAtMillis = o.optLong("updatedAtMillis", System.currentTimeMillis())
                     )
                 )
             }
@@ -373,7 +481,11 @@ object AppRepository {
                     name = o.getString("name"),
                     icon = BudgetCategoryIcon.valueOf(o.getString("icon")),
                     budgetAmount = o.getDouble("budgetAmount"),
-                    ledgerAccount = o.optString("ledgerAccount", "")
+                    ledgerAccount = o.optString("ledgerAccount", ""),
+                    syncStatus = runCatching { SyncStatus.valueOf(o.optString("syncStatus")) }.getOrDefault(SyncStatus.SYNCED),
+                    version = o.optInt("version", 1),
+                    createdByUserId = o.optString("createdByUserId", ""),
+                    updatedAtMillis = o.optLong("updatedAtMillis", System.currentTimeMillis())
                 )
                 ui.actualInput = o.optString("actualInput", "")
                 budgetCategories.add(ui)
@@ -391,7 +503,11 @@ object AppRepository {
                         code = o.getString("code"),
                         name = o.getString("name"),
                         icon = DepartmentIcon.valueOf(o.getString("icon")),
-                        monthlyBudget = o.getDouble("monthlyBudget")
+                        monthlyBudget = o.getDouble("monthlyBudget"),
+                        syncStatus = runCatching { SyncStatus.valueOf(o.optString("syncStatus")) }.getOrDefault(SyncStatus.SYNCED),
+                        version = o.optInt("version", 1),
+                        createdByUserId = o.optString("createdByUserId", ""),
+                        updatedAtMillis = o.optLong("updatedAtMillis", System.currentTimeMillis())
                     )
                 )
             }

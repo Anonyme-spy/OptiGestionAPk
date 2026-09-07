@@ -6,18 +6,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,7 +37,7 @@ import live.anonymespy.optigestion.ui.theme.ThemeMode
  * via formatCurrency, runway via cashOnHand).
  */
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onProfileClick: () -> Unit = {}) {
     val context = LocalContext.current
     // Recreating is the reliable fallback: AppCompatDelegate.setApplicationLocales()
     // (called inside AppRepository.selectLanguage()) is supposed to recreate an
@@ -60,6 +63,16 @@ fun SettingsScreen() {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        SectionHeader(title = "PROFIL UTILISATEUR", subtitle = "Détails de votre compte et rôle")
+
+        Spacer(Modifier.height(16.dp))
+
+        SettingsCard {
+            ProfileRow(user = AppRepository.currentUser, onClick = onProfileClick)
+        }
+
+        Spacer(Modifier.height(28.dp))
+
         SectionHeader(title = stringResource(R.string.settings_language), subtitle = stringResource(R.string.settings_language_subtitle))
 
         Spacer(Modifier.height(16.dp))
@@ -120,6 +133,16 @@ fun SettingsScreen() {
 
         Spacer(Modifier.height(28.dp))
 
+        SectionHeader(title = stringResource(R.string.settings_personalization), subtitle = stringResource(R.string.settings_personalization_subtitle))
+
+        Spacer(Modifier.height(16.dp))
+
+        SettingsCard {
+            AppLogoSelectionRow()
+        }
+
+        Spacer(Modifier.height(28.dp))
+
         SectionHeader(title = stringResource(R.string.settings_cash), subtitle = stringResource(R.string.settings_cash_subtitle))
 
         Spacer(Modifier.height(16.dp))
@@ -165,6 +188,33 @@ private fun SectionHeader(title: String, subtitle: String) {
     Text(text = title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp, color = CaeColors.OnSurfaceVariant)
     Spacer(Modifier.height(4.dp))
     Text(text = subtitle, fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
+}
+
+@Composable
+private fun ProfileRow(user: User?, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(CaeColors.PrimaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = user?.displayName?.firstOrNull()?.toString() ?: "?", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnPrimaryContainer)
+        }
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = user?.displayName ?: "Utilisateur Inconnu", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = CaeColors.Primary)
+            Text(text = user?.email ?: "Pas d'email", fontSize = 13.sp, color = CaeColors.OnSurfaceVariant)
+            val typeLabel = if (user?.accountType == AccountType.ENTREPRISE) "Compte Entreprise" else if (user?.accountType == AccountType.GUEST) "Mode Invité" else "Compte Personnel"
+            val roleLabel = user?.enterpriseRole?.let { " · ${it.name}" } ?: ""
+            Text(text = "$typeLabel$roleLabel", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnTertiaryContainer)
+        }
+        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = CaeColors.OnSurfaceVariant, modifier = Modifier.size(14.dp))
+    }
 }
 
 @Composable
@@ -243,6 +293,56 @@ private fun CurrencyRow(option: Currency, selected: Boolean, onSelect: () -> Uni
             onClick = onSelect,
             colors = RadioButtonDefaults.colors(selectedColor = CaeColors.Primary)
         )
+    }
+}
+
+@Composable
+private fun AppLogoSelectionRow() {
+    val logos = listOf(
+        "default" to Icons.Filled.BarChart,
+        "analytics" to Icons.Filled.Analytics,
+        "savings" to Icons.Filled.Savings,
+        "business" to Icons.Filled.Business,
+        "account_balance" to Icons.Filled.AccountBalance,
+        "auto_awesome" to Icons.Filled.AutoAwesome,
+        "account_tree" to Icons.Filled.AccountTree,
+        "payments" to Icons.Filled.Payments,
+        "receipt_long" to Icons.AutoMirrored.Filled.ReceiptLong,
+        "store" to Icons.Filled.Store
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.settings_app_logo_label), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = CaeColors.OnSurface)
+            Text(text = "Choix visuel du haut", fontSize = 11.sp, color = CaeColors.OnSurfaceVariant)
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            logos.forEach { (id, icon) ->
+                val isSelected = AppRepository.appLogo == id
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) CaeColors.PrimaryContainer else CaeColors.SurfaceContainer)
+                        .clickable { AppRepository.selectAppLogo(id) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) CaeColors.OnPrimaryContainer else CaeColors.OnSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
     }
 }
 

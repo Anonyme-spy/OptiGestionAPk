@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,8 +35,9 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 fun OptiGestionRoot(isWideScreen: Boolean = false) {
     if (!AppRepository.hasChosenSetup) {
         OnboardingScreen(
-            onLoadTemplate = { mode -> AppRepository.loadTemplate(mode) },
-            onStartEmpty = { mode -> AppRepository.startEmpty(mode) }
+            onComplete = { user, mode, useTemplate ->
+                AppRepository.completeOnboarding(user, mode, useTemplate)
+            }
         )
     } else {
         CaeAnalyticsApp(isWideScreen = isWideScreen)
@@ -97,7 +98,8 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
                     title = currentDestination.topBarTitle(),
                     periodLabel = AppRepository.periodLabel,
                     onResetClick = { showResetConfirm = true },
-                    onSettingsClick = { showSettings = true }
+                    onSettingsClick = { showSettings = true },
+                    onProfileClick = { navigateTo(NavDestination.PROFILE) }
                 )
             }
         },
@@ -109,7 +111,10 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
     ) { innerPadding ->
         if (showSettings) {
             Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                SettingsScreen()
+                SettingsScreen(onProfileClick = {
+                    showSettings = false
+                    navigateTo(NavDestination.PROFILE)
+                })
             }
         } else {
             Row(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
@@ -126,13 +131,13 @@ fun CaeAnalyticsApp(isWideScreen: Boolean = false) {
                     composable(NavDestination.ANALYSIS.route) { BudgetVsActualScreen() }
                     composable(NavDestination.COST_CENTERS.route) { CostCentersScreen() }
                     composable(NavDestination.STATS.route) { StatsScreen() }
+                    composable(NavDestination.PROFILE.route) { ProfileScreen() }
                 }
             }
         }
     }
 }
 
-/** Localized label for the bottom nav / side rail. */
 @Composable
 fun NavDestination.navLabel(): String {
     val isPro = AppRepository.appMode == AppMode.PRO
@@ -142,6 +147,7 @@ fun NavDestination.navLabel(): String {
         NavDestination.ANALYSIS -> stringResource(if (isPro) R.string.nav_budget else R.string.nav_budget_simple)
         NavDestination.COST_CENTERS -> stringResource(if (isPro) R.string.nav_cost_centers else R.string.nav_cost_centers_simple)
         NavDestination.STATS -> stringResource(if (isPro) R.string.nav_reports else R.string.nav_reports_simple)
+        NavDestination.PROFILE -> stringResource(R.string.nav_profile)
     }
 }
 
@@ -155,6 +161,7 @@ fun NavDestination.topBarTitle(): String {
         NavDestination.ANALYSIS -> stringResource(if (isPro) R.string.top_bar_budget else R.string.top_bar_budget_simple)
         NavDestination.COST_CENTERS -> stringResource(if (isPro) R.string.top_bar_cost_centers else R.string.top_bar_cost_centers_simple)
         NavDestination.STATS -> stringResource(if (isPro) R.string.top_bar_reports else R.string.top_bar_reports_simple)
+        NavDestination.PROFILE -> stringResource(R.string.top_bar_profile)
     }
 }
 
@@ -164,18 +171,64 @@ fun NavDestination.topBarTitle(): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CaeTopAppBar(title: String, periodLabel: String, onResetClick: () -> Unit, onSettingsClick: () -> Unit) {
+private fun CaeTopAppBar(
+    title: String, 
+    periodLabel: String, 
+    onResetClick: () -> Unit, 
+    onSettingsClick: () -> Unit,
+    onProfileClick: () -> Unit = {}
+) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val user = AppRepository.currentUser
 
     TopAppBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(32.dp).clip(CircleShape).background(CaeColors.SurfaceContainer)
-                )
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(CaeColors.PrimaryContainer)
+                        .clickable { onProfileClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 1. If user has custom avatar URL (backend-ready)
+                    if (user != null && !user.avatarUrl.isNullOrBlank()) {
+                        Text(text = user.displayName.firstOrNull()?.toString() ?: "?", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnPrimaryContainer)
+                    } else {
+                        // 2. Fallback to chosen App Logo from Settings
+                        val logoIcon = when (AppRepository.appLogo) {
+                            "analytics" -> Icons.Filled.Analytics
+                            "savings" -> Icons.Filled.Savings
+                            "business" -> Icons.Filled.Business
+                            "account_balance" -> Icons.Filled.AccountBalance
+                            "auto_awesome" -> Icons.Filled.AutoAwesome
+                            "account_tree" -> Icons.Filled.AccountTree
+                            "payments" -> Icons.Filled.Payments
+                            "receipt_long" -> Icons.AutoMirrored.Filled.ReceiptLong
+                            "store" -> Icons.Filled.Store
+                            else -> Icons.Filled.BarChart
+                        }
+                        Icon(imageVector = logoIcon, contentDescription = null, tint = CaeColors.OnPrimaryContainer, modifier = Modifier.size(18.dp))
+                    }
+                }
                 Spacer(Modifier.width(8.dp))
                 Column {
-                    Text(text = title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = CaeColors.Primary)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = CaeColors.Primary)
+                        val pending = AppRepository.pendingSyncCount()
+                        if (pending > 0) {
+                            Spacer(Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(CaeColors.PendingBg.copy(alpha = 0.5f))
+                                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Icon(imageVector = Icons.Filled.Sync, contentDescription = null, tint = CaeColors.PendingText, modifier = Modifier.size(10.dp))
+                            }
+                        }
+                    }
                     Text(text = periodLabel, fontSize = 11.sp, color = CaeColors.OnSurfaceVariant)
                 }
             }
@@ -239,6 +292,7 @@ private fun NavDestination.icon(): ImageVector = when (this) {
     NavDestination.ANALYSIS -> Icons.Filled.Analytics
     NavDestination.COST_CENTERS -> Icons.Filled.AccountTree
     NavDestination.STATS -> Icons.Filled.QueryStats
+    NavDestination.PROFILE -> Icons.Filled.Person
 }
 
 /* ============================================================
@@ -250,8 +304,21 @@ private fun CaeBottomNavBar(
     selected: NavDestination,
     onSelect: (NavDestination) -> Unit
 ) {
+    val user = AppRepository.currentUser
+    val visibleDestinations = remember(user) {
+        NavDestination.entries.filter { dest ->
+            dest != NavDestination.PROFILE && when (user?.enterpriseRole) {
+                EnterpriseRole.ADMIN -> true
+                EnterpriseRole.COMPTABLE -> true
+                EnterpriseRole.RH -> dest != NavDestination.COST_CENTERS
+                EnterpriseRole.EMPLOYE -> dest == NavDestination.DASHBOARD || dest == NavDestination.SHEETS
+                else -> true 
+            }
+        }
+    }
+
     NavigationBar(containerColor = CaeColors.SurfaceContainer) {
-        NavDestination.entries.forEach { destination ->
+        visibleDestinations.forEach { destination ->
             val label = destination.navLabel()
             NavigationBarItem(
                 selected = selected == destination,
@@ -279,6 +346,19 @@ private fun CaeSideNavRail(
     selected: NavDestination,
     onSelect: (NavDestination) -> Unit
 ) {
+    val user = AppRepository.currentUser
+    val visibleDestinations = remember(user) {
+        NavDestination.entries.filter { dest ->
+            dest != NavDestination.PROFILE && when (user?.enterpriseRole) {
+                EnterpriseRole.ADMIN -> true
+                EnterpriseRole.COMPTABLE -> true
+                EnterpriseRole.RH -> dest != NavDestination.COST_CENTERS
+                EnterpriseRole.EMPLOYE -> dest == NavDestination.DASHBOARD || dest == NavDestination.SHEETS
+                else -> true
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .width(80.dp)
@@ -288,7 +368,7 @@ private fun CaeSideNavRail(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        NavDestination.entries.forEach { destination ->
+        visibleDestinations.forEach { destination ->
             val isSelected = selected == destination
             val label = destination.navLabel()
             Column(

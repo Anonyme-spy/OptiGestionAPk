@@ -1,170 +1,129 @@
-# OptiGestion — Backend Roadmap (Node.js + MariaDB)
+# OptiGestion — Final Backend Roadmap (Node.js + MariaDB)
 
-Not implemented yet — this is the plan for the next phase, so today's
-client-side changes (data shapes in `UserModels.kt`, the `AppRepository`
-structure) don't have to be reworked later. Written so it applies equally
-to the Android client, a future web client and the future Python client.
+This document is the definitive guide for an AI or Developer to implement the OptiGestion backend. It aligns perfectly with the Android client's data structures and sync logic.
 
-## 1. Why a backend at all
+## 1. Core Architecture
+- **Tech Stack**: Node.js (TypeScript), Express.js, MariaDB.
+- **API Style**: RESTful, JSON-only payloads.
+- **Security**: JWT-based authentication (Access + Refresh tokens).
+- **Multi-Tenancy**: "Workspace" concept. A workspace is either a `USER_ID` (Personal) or a `COMPANY_ID` (Business).
 
-Today, `AppRepository` is local-only: one device, one SharedPreferences
-file, no accounts. Moving to accounts + cross-device sync means the
-source of truth moves from the device to the server; the device becomes
-a cache. That's the one architectural shift everything else follows from.
-
-## 2. Account model
-
-Two account types, matching what you described:
-
-- **Particulier** — one user, one workspace. Simple.
-- **Entreprise** — one company, several users, three roles:
-  - **Admin** — full read/write: cost centers, budgets, users, company settings.
-  - **RH** — scoped to payroll/labor-related cost centers and employee
-    expense approvals; not full financial visibility.
-  - **Employé** — can submit entries (e.g. expense claims) for their own
-    cost center, read-only on company-wide dashboards (or no access to
-    them at all, depending on how strict you want this).
-
-`UserModels.kt` (added today) mirrors this: `AccountType`, `EnterpriseRole`,
-`User`, `Company`. Nothing reads/writes them yet.
-
-## 3. Suggested MariaDB schema
+## 2. MariaDB Schema (Production Ready)
 
 ```sql
+-- Users Table
 CREATE TABLE users (
   id CHAR(36) PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255),
   display_name VARCHAR(120) NOT NULL,
-  account_type ENUM('PARTICULIER','ENTREPRISE') NOT NULL,
-  language ENUM('fr','en') NOT NULL DEFAULT 'fr',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  phone VARCHAR(20),
+  avatar_url VARCHAR(255),
+  job_title VARCHAR(120),
+  bio TEXT,
+  app_logo VARCHAR(50) DEFAULT 'default',
+  account_type ENUM('GUEST','PARTICULIER','ENTREPRISE') NOT NULL,
+  company_id CHAR(36),
+  company_name VARCHAR(160),
+  company_industry VARCHAR(100),
+  created_at_millis BIGINT NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Companies Table
 CREATE TABLE companies (
   id CHAR(36) PRIMARY KEY,
   name VARCHAR(160) NOT NULL,
-  owner_user_id CHAR(36) NOT NULL REFERENCES users(id)
+  registration_number VARCHAR(50),
+  industry VARCHAR(100),
+  address TEXT,
+  website VARCHAR(255),
+  tax_id VARCHAR(50),
+  owner_id CHAR(36) NOT NULL,
+  FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
--- Links a user to a company with a role. A PARTICULIER user has no row here.
-CREATE TABLE company_memberships (
-  user_id CHAR(36) NOT NULL REFERENCES users(id),
-  company_id CHAR(36) NOT NULL REFERENCES companies(id),
-  role ENUM('ADMIN','RH','EMPLOYE') NOT NULL,
-  PRIMARY KEY (user_id, company_id)
+-- Memberships (RBAC)
+CREATE TABLE memberships (
+  user_id CHAR(36) NOT NULL,
+  company_id CHAR(36) NOT NULL,
+  role ENUM('OWNER','ADMIN','RH','COMPTABLE','EMPLOYE') NOT NULL,
+  PRIMARY KEY (user_id, company_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
--- Every "workspace" (a particulier user OR a company) owns its own data.
--- owner_type + owner_id is simpler than two near-identical table sets.
+-- Entries Table (Financial Ledger)
+CREATE TABLE entries (
+  id CHAR(36) PRIMARY KEY,
+  workspace_id CHAR(36) NOT NULL,
+  created_by_user_id CHAR(36) NOT NULL,
+  category VARCHAR(160) NOT NULL,
+  icon VARCHAR(20) NOT NULL,
+  amount_ttc DECIMAL(14,2) NOT NULL,
+  amount_ht DECIMAL(14,2) NOT NULL,
+  tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0,
+  is_credit BOOLEAN NOT NULL DEFAULT FALSE,
+  cost_center_code VARCHAR(20),
+  ledger_account VARCHAR(20),
+  status ENUM('APPROVED','PENDING','REJECTED') NOT NULL DEFAULT 'PENDING',
+  timestamp_millis BIGINT NOT NULL,
+  version INT NOT NULL DEFAULT 1,
+  updated_at_millis BIGINT NOT NULL,
+  FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
+-- Cost Centers
 CREATE TABLE cost_centers (
   id CHAR(36) PRIMARY KEY,
-  owner_type ENUM('USER','COMPANY') NOT NULL,
-  owner_id CHAR(36) NOT NULL,
+  workspace_id CHAR(36) NOT NULL,
   code VARCHAR(20) NOT NULL,
   name VARCHAR(120) NOT NULL,
   icon VARCHAR(20) NOT NULL,
   monthly_budget DECIMAL(14,2) NOT NULL DEFAULT 0,
-  UNIQUE KEY (owner_type, owner_id, code)
+  version INT NOT NULL DEFAULT 1,
+  updated_at_millis BIGINT NOT NULL
 );
 
-CREATE TABLE budget_categories (
+-- Budgets
+CREATE TABLE budgets (
   id CHAR(36) PRIMARY KEY,
-  owner_type ENUM('USER','COMPANY') NOT NULL,
-  owner_id CHAR(36) NOT NULL,
+  workspace_id CHAR(36) NOT NULL,
   name VARCHAR(120) NOT NULL,
   icon VARCHAR(20) NOT NULL,
   budget_amount DECIMAL(14,2) NOT NULL,
-  actual_amount DECIMAL(14,2) NOT NULL DEFAULT 0
-);
-
-CREATE TABLE entries (
-  id CHAR(36) PRIMARY KEY,
-  owner_type ENUM('USER','COMPANY') NOT NULL,
-  owner_id CHAR(36) NOT NULL,
-  created_by_user_id CHAR(36) NOT NULL REFERENCES users(id),
-  category VARCHAR(160) NOT NULL,
-  icon VARCHAR(20) NOT NULL,
-  amount DECIMAL(14,2) NOT NULL,
-  is_credit BOOLEAN NOT NULL DEFAULT FALSE,
-  cost_center_code VARCHAR(20),
-  status ENUM('APPROVED','PENDING','REJECTED') NOT NULL DEFAULT 'PENDING',
-  timestamp_millis BIGINT NOT NULL,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE settings (
-  owner_type ENUM('USER','COMPANY') NOT NULL,
-  owner_id CHAR(36) NOT NULL,
-  currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-  cash_on_hand DECIMAL(14,2) NOT NULL DEFAULT 0,
-  theme_mode VARCHAR(10) NOT NULL DEFAULT 'SYSTEM',
-  PRIMARY KEY (owner_type, owner_id)
+  ledger_account VARCHAR(20),
+  version INT NOT NULL DEFAULT 1,
+  updated_at_millis BIGINT NOT NULL
 );
 ```
 
-This maps almost 1:1 onto `SheetEntry`, `CostCenter`, `BudgetCategoryUi` —
-the client models barely change, they just get an `id`/`ownerId` from the
-server instead of being generated locally with `UUID.randomUUID()`.
+## 3. API Endpoints
 
-## 4. API shape (Express + JWT)
+### Authentication
+- `POST /auth/register`: Create a `PARTICULIER` or `ENTREPRISE` (as `OWNER`).
+- `POST /auth/login`: Issue JWTs.
+- `POST /auth/refresh`: Renew tokens.
 
-- `POST /auth/register` — `{ email, password, displayName, accountType }`
-- `POST /auth/login` — returns `{ accessToken, refreshToken, user }`
-- `POST /auth/refresh`
-- `GET /me` — current user + company + role
-- `POST /companies` — create a company (becomes ADMIN automatically)
-- `POST /companies/:id/invite` — invite by email with a role
-- `GET /workspace/entries` / `POST` / `PUT /:id` / `DELETE /:id`
-- `GET /workspace/cost-centers` / `POST` / `PUT /:id` / `DELETE /:id`
-- `GET /workspace/budget-categories` / ...
-- `GET /workspace/settings` / `PUT`
-- `GET /workspace/export.csv`
+### Workspace & Sync (Critical)
+- `GET /sync/pull?since_version=X`: Fetch all records across all tables where `version > X`.
+- `POST /sync/push`: Batch upload local changes. The backend must increment the global `version` and return the new server state.
 
-"Workspace" here means: resolve `owner_type`/`owner_id` server-side from
-the JWT (particulier → their own `user_id`; enterprise → their
-`company_id`), so the client never has to know or send it. Role
-middleware then decides what each endpoint allows per `EnterpriseRole`
-(e.g. `EMPLOYE` can `POST /workspace/entries` but not `DELETE`, and
-can't touch `/workspace/cost-centers` at all).
+### File Management
+- `POST /upload/avatar`: Store user avatar. Return signed URL.
+- `POST /upload/logo`: Store company logo. Return signed URL.
 
-## 5. Auth on the Android client
+## 4. Business Logic Requirements (AI Implementation)
+1. **RBAC Middleware**: Before any workspace request, verify the user's role in `memberships`.
+    - `EMPLOYE` cannot see company-wide budgets or cost centers.
+    - `EMPLOYE` can only `GET` entries where `created_by_user_id == req.user.id`.
+    - `RH` can see labor-specific cost centers (filter by code prefix if needed).
+2. **Sync Conflict Resolution**: Use **Timestamp-based Server Wins**. If a push contains a record with an older `updated_at_millis` than the server, ignore the push for that record.
+3. **VAT Calculation**: Mirror the client logic. If a push only contains `amount_ttc` and `tax_rate`, calculate `amount_ht` server-side to ensure consistency.
 
-- `androidx.security:security-crypto` for storing the refresh token
-  (EncryptedSharedPreferences instead of the plain SharedPreferences
-  `AppRepository` uses today).
-- Retrofit + OkHttp for the API calls, with an interceptor that attaches
-  `Authorization: Bearer <accessToken>` and refreshes on 401.
-- `AppRepository` splits into two responsibilities: a local cache (as
-  today, useful for offline) and a `SyncEngine` that reconciles local
-  changes with the server — last-write-wins to start, since these are
-  low-conflict-probability, low-frequency edits (not a collaborative
-  document).
-
-## 6. Why this also works for the Python client later
-
-None of the above is Android-specific — it's a plain REST API over
-JWT and a relational schema. A Python client (CLI, desktop, or a second
-web frontend) talks to the exact same endpoints. The only genuinely
-platform-specific piece is *where* the refresh token is stored securely.
-
-## 7. Suggested build order
-
-1. `users` + `auth` endpoints, particulier accounts only, no company
-   concept yet — get login working end-to-end first.
-2. Move `entries`/`cost_centers`/`budget_categories`/`settings` behind
-   auth, particulier-only. Android client switches from
-   SharedPreferences-only to "cache + sync".
-3. Add `companies` + `company_memberships` + role middleware.
-4. Add the Entreprise onboarding flow (create company vs join via
-   invite) and role-gated UI on the client (e.g. EMPLOYE doesn't see
-   the Cost Centers tab at all).
-5. Only then: Python client, reusing the same API.
-
-## 8. What NOT to build yet
-
-- Real-time sync (websockets) — polling / pull-to-refresh is enough at
-  this scale and much simpler.
-- Multi-currency conversion — out of scope until asked for.
-- Fine-grained per-cost-center permissions beyond the three roles above
-  — start coarse, narrow later if actually needed.
+## 5. Development Phases
+1. **Infrastructure**: Setup Node + MariaDB + Docker.
+2. **Auth & Profile**: Implement JWT and User profile management.
+3. **Sync Engine**: The most important part. Handle the versioning logic.
+4. **Roles**: Implement the RBAC middleware and filter the JSON responses.
+5. **Testing**: Write unit tests for the VAT logic and Sync conflict resolution.

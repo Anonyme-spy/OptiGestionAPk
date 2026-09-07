@@ -1,5 +1,135 @@
 # OptiGestion — mise à niveau "vraie app de gestion financière"
 
+## Round 15 — Configuration Réseau & Backend Readiness
+
+### Préparation de la Connexion API
+- **Nouveau fichier `NetworkConfig.kt`** : Centralisation de la configuration réseau.
+    - Définition de la `BASE_URL` (par défaut `http://10.0.2.2:4000` pour l'émulateur).
+    - Ajout des préfixes de versioning API (`/api/v1`).
+- **Instructions de Test** : Documentation de la procédure pour relier l'app Android au backend Node.js local.
+
+## Round 14 — Profils Enrichis & Consistance Visuelle
+
+### Identité Visuelle Avancée
+- **Avatar Intelligent** : La barre de titre affiche désormais en priorité l'avatar de l'utilisateur (ou son initiale). En l'absence d'avatar, elle utilise l'icône personnalisée choisie dans les Paramètres.
+- **Bibliothèque d'Icônes Étendue** : Ajout de 4 nouvelles icônes professionnelles (Arborescence, Paiements, Reçu, Magasin) pour la personnalisation de la marque.
+- **Navigation Optimisée** : La barre de titre permet un accès direct au profil, tandis que la navigation principale reste épurée pour les outils métiers.
+
+### Profil Utilisateur Complet
+- **Champs Additionnels** : Le profil supporte désormais des informations riches pour les utilisateurs et les organisations :
+    - Utilisateur : Poste/Titre, Biographie, Téléphone.
+    - Entreprise : Secteur d'activité, Site Web, Identifiant fiscal (TIN), Adresse.
+- **Onboarding Guest Flexible** : Les utilisateurs invités peuvent maintenant configurer intégralement leur expérience (Mode Simple/Pro + Template) dès le premier lancement.
+
+### Infrastructure & Roadmap Backend
+- **Prêt pour le Cloud** : Alignement total des modèles de données avec le futur backend Node.js.
+- **Schéma MariaDB Finalisé** : Mise à jour de `BACKEND_ROADMAP.md` avec toutes les colonnes de profils et de métadonnées pour assurer une synchronisation sans perte.
+
+## Round 13 — Plan de Production Backend & Finalisation Mobile
+
+### Alignement Final des Modèles
+- **Consistance Totale** : Ajout des champs `createdByUserId` et `updatedAtMillis` à l'ensemble des modèles de données ([`CostCenter`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/java/live/anonymespy/optigestion/Models.kt), [`BudgetCategoryUi`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/java/live/anonymespy/optigestion/Models.kt)).
+- **Prêt pour l'Audit** : Chaque changement budgétaire ou structurel est désormais traçable par utilisateur et horodaté.
+
+### Plan Directeur pour l'IA Backend
+- **Roadmap Backend v3** : Création d'un document [`BACKEND_ROADMAP.md`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/java/live/anonymespy/optigestion/BACKEND_ROADMAP.md) ultra-détaillé, conçu comme une "fiche de mission" pour une IA ou un développeur Node.js.
+- **Protocole de Sync Avancé** : Définition de la logique de synchronisation par lots (Batch) avec résolution de conflits basée sur l'horodatage serveur.
+- **Sécurité et RBAC** : Spécification des middlewares Node.js pour garantir que les employés ne voient jamais les données sensibles (budgets globaux, TVA, etc.).
+
+### Optimisations de la Page Profil
+- **Robustesse de l'UI** : Correction d'un bug de récursion dans le formulaire de profil.
+- **Persistance Locale** : Mise à jour de l'[`AppRepository`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/java/live/anonymespy/optigestion/AppRepository.kt) pour mémoriser l'intégralité des nouveaux champs techniques (versioning, sync status) même en mode déconnecté.
+
+## Round 12 — Fluidité Offline & Indicateurs Fiscaux
+
+### Expérience Utilisateur et Navigation
+- **Allègement de la Navbar** : Retrait de l'onglet Profil de la barre de navigation pour maximiser l'espace pour les outils financiers. Le profil reste accessible via l'avatar en haut à gauche et les Paramètres.
+- **Indicateur de Synchronisation** : Ajout d'un badge visuel (icône Sync) dans la barre de titre qui s'active lorsqu'il y a des données en attente de synchronisation cloud.
+
+### Nouveaux Outils du Mode Pro
+- **Estimation TVA en temps réel** : Ajout d'une carte "TVA à payer" sur le Dashboard (réservé aux rôles Admin/Comptable). Elle calcule instantanément la différence entre TVA collectée et déductible.
+- **Support Offline Robuste** : Toutes les nouvelles écritures, budgets et centres de coût sont désormais marqués "En attente" (`PENDING`) localement, garantissant qu'aucune donnée n'est perdue sans connexion.
+
+### Infrastructure & Roadmap
+- **Protocole de Sync v2** : Mise à jour de `BACKEND_ROADMAP.md` détaillant la logique de synchronisation par lot et la gestion des conflits (Server-Wins).
+- **Multipart/Files** : Définition de la stratégie d'upload pour les logos d'organisation et avatars utilisateurs vers le stockage cloud.
+
+## Round 11 — Profil Utilisateur & Navigation Visuelle
+
+### Identité Visuelle et Profil
+- **Avatar dans la Barre de Titre** : L'icône générique de l'application dans la barre de titre est remplacée par la photo de profil (avatar) de l'utilisateur.
+- **Accès Rapide au Profil** : Cliquer sur l'avatar dans la barre de titre ouvre directement la nouvelle page de profil.
+- **Page de Profil Dédiée** : Un nouvel écran `ProfileScreen` permet de visualiser et de modifier les informations personnelles :
+    - Nom d'affichage, Email, Téléphone.
+    - URL de l'Avatar.
+    - Détails de la société et rôle (pour les comptes Entreprise).
+- **Intégration dans les Paramètres** : La section profil dans les Paramètres est désormais interactive et permet de naviguer vers la page de modification du profil.
+
+### Infrastructure Backend & Roadmap
+- **Gestion des Avatars** : Mise à jour de `BACKEND_ROADMAP.md` pour inclure les endpoints d'upload d'avatar (multipart) et de mise à jour du profil.
+- **Modèle Utilisateur Complet** : Finalisation du lien entre les modèles Kotlin et les futurs objets JSON de l'API pour une transition transparente vers le cloud.
+
+## Round 10 — Personnalisation & Préparation Offline/Cloud
+
+### Onboarding et Guest Mode enrichis
+- **Liberté pour les Invités** : Les utilisateurs en mode Guest peuvent désormais choisir entre le mode **Simple** (quotidien) et **Pro** (expert), comme les utilisateurs enregistrés.
+- **Flux Unifié** : Standardisation du parcours d'onboarding pour tous les types de comptes.
+
+### Personnalisation de la Marque
+- **Logo Dynamique** : Ajout d'une option dans les Paramètres pour changer l'icône de l'application affichée dans la barre de titre.
+- **Sélection Professionnelle** : Plusieurs icônes prédéfinies (Analytics, Épargne, Business, Banque) sont disponibles pour adapter l'app à l'identité visuelle de l'utilisateur ou de l'entreprise.
+
+### Architecture Offline-First & Sync
+L'application est maintenant structurellement prête pour une synchronisation cloud robuste tout en restant 100% fonctionnelle hors-ligne.
+- **Versioning des Données** : Chaque enregistrement (Écriture, Budget, Centre) dispose désormais d'un champ `version` et d'un `syncStatus` (Synchronisé, En attente, Erreur).
+- **Logique de Conflit** : Préparation des modèles pour gérer les fusions de données lors de la reconnexion au futur backend Node.js.
+- **Roadmap Backend v2** : Mise à jour de `BACKEND_ROADMAP.md` détaillant le protocole de synchronisation par version et les uploads multipart pour les logos.
+
+## Round 9 — Expérience API-First & Système de Comptes Avancé
+
+### Refonte de l'Authentification et Onboarding
+L'application prépare son passage au cloud avec un flux d'accueil totalement repensé, centré sur l'utilisateur et son organisation.
+
+- **Mode Invité (Guest)** : Possibilité d'utiliser l'app sans compte. Les données restent locales sur l'appareil.
+- **Création de Compte** : Nouveau formulaire d'inscription (Email, MDP, Nom) prêt pour une synchronisation cloud.
+- **Parcours "Owner" Entreprise** : Les créateurs d'organisation peuvent désormais renseigner les détails de leur société (Secteur, SIRET) dès l'onboarding.
+- **Multi-étapes Fluide** : Un nouveau système de navigation par étapes dans l'accueil pour une configuration sans friction.
+
+### Modèle de Données Étendu (JSON-Ready)
+Les modèles internes ont été enrichis pour correspondre à 100% aux futurs contrats d'API Node.js.
+- **Profils Enrichis** : Ajout du téléphone, de l'URL d'avatar et de la date de création.
+- **Détails Société** : Support pour l'immatriculation légale, l'adresse et le secteur d'activité.
+- **Rôle Propriétaire** : Introduction du rôle `OWNER` pour distinguer le créateur de l'entreprise des simples administrateurs.
+
+### Vision Backend 2.0
+- **Roadmap API-First** : Mise à jour de `BACKEND_ROADMAP.md` pour refléter une architecture basée sur des échanges JSON purs.
+- **Transition Invité → Cloud** : Planification de la logique de migration des données locales vers un compte distant.
+
+## Round 8 — Système de Comptes & Préparation Backend
+
+### Introduction des Comptes et Rôles
+L'application franchit une étape majeure vers le multi-utilisateur avec l'intégration d'un système de profils et de rôles (RBAC).
+
+- **Types de Comptes** : Distinction nette entre **Compte Personnel** (Particulier) et **Compte Entreprise**.
+- **Rôles Entreprise** : Implémentation de 4 rôles avec permissions distinctes :
+    - **Admin** : Contrôle total sur l'organisation et les données.
+    - **RH** : Accès focalisé sur les frais de personnel et les centres de coût liés à la main-d'œuvre.
+    - **Comptable** : Visibilité financière complète, gestion de la TVA et clôtures.
+    - **Employé** : Mode "Saisie seule" — ne voit que ses propres notes de frais, accès restreint aux indicateurs globaux.
+
+### Sécurité et Confidentialité
+- **Filtrage des Données** : Les écritures (Sheets) sont désormais filtrées par rôle. Un employé ne peut plus consulter les transactions globales de l'entreprise.
+- **Traçabilité** : Chaque écriture mémorise désormais son créateur (`createdByUserId`).
+
+### Cohérence Terminologique et UX
+- **Navigation Dynamique** : Les onglets (Budget, Centres, Rapports) s'affichent ou se masquent automatiquement selon le rôle de l'utilisateur.
+- **Section Profil** : Ajout d'une vue "Profil Utilisateur" dans les Paramètres pour visualiser son compte, son email et son rôle.
+- **Harmonisation FR/EN** : Finalisation de la traduction et de la cohérence des termes entre les modes Simple et Pro.
+
+### Stratégie Backend (Ready for Node.js)
+- **Feuille de Route Mise à Jour** : Le document `BACKEND_ROADMAP.md` a été enrichi avec le schéma SQL multi-tenant et la logique de gestion des organisations.
+- **Modèles Prêts** : Les modèles Kotlin (`User`, `SheetEntry`) sont déjà alignés sur la future API REST.
+
 ## Round 7 — Expérience Dual-Mode : Simple vs Pro
 
 ### Double expérience utilisateur
