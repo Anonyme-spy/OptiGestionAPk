@@ -34,11 +34,7 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 @Composable
 fun OptiGestionRoot(isWideScreen: Boolean = false) {
     if (!AppRepository.hasChosenSetup) {
-        OnboardingScreen(
-            onComplete = { user, mode, useTemplate ->
-                AppRepository.completeOnboarding(user, mode, useTemplate)
-            }
-        )
+        OnboardingScreen()
     } else {
         CaeAnalyticsApp(isWideScreen = isWideScreen)
     }

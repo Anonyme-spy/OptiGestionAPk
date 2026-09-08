@@ -14,6 +14,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 /**
  * Single, app-wide source of truth. Every screen reads from and writes to
@@ -167,7 +168,63 @@ object AppRepository {
         persist()
     }
 
-    /* ---------------- Onboarding ---------------- */
+    /* ---------------- Onboarding & Auth ---------------- */
+
+    suspend fun signup(request: RegisterRequest): Result<User> {
+        return try {
+            val response = NetworkModule.authService.register(request)
+            if (response.isSuccessful) {
+                val auth = response.body()!!
+                SecurePrefs.accessToken = auth.accessToken
+                SecurePrefs.refreshToken = auth.refreshToken
+                this.currentUser = auth.user
+                this.appMode = if (auth.user.accountType == AccountType.PARTICULIER) appMode else AppMode.PRO
+                hasChosenSetup = true
+                persist()
+                Result.success(auth.user)
+            } else {
+                Result.failure(Exception("Signup failed: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun login(email: String, password: String): Result<User> {
+        return try {
+            val response = NetworkModule.authService.login(LoginRequest(email, password))
+            if (response.isSuccessful) {
+                val auth = response.body()!!
+                SecurePrefs.accessToken = auth.accessToken
+                SecurePrefs.refreshToken = auth.refreshToken
+                this.currentUser = auth.user
+                this.appMode = if (auth.user.accountType == AccountType.PARTICULIER) appMode else AppMode.PRO
+                hasChosenSetup = true
+                persist()
+                Result.success(auth.user)
+            } else {
+                Result.failure(Exception("Login failed: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun startGuest(mode: AppMode, useTemplate: Boolean) {
+        val user = User(
+            id = UUID.randomUUID().toString(),
+            displayName = "Invité",
+            accountType = AccountType.GUEST,
+            createdAtMillis = System.currentTimeMillis()
+        )
+        this.currentUser = user
+        this.appMode = mode
+        if (useTemplate) {
+            loadTemplate(mode)
+        } else {
+            startEmpty(mode)
+        }
+    }
 
     fun completeOnboarding(user: User, mode: AppMode, useTemplate: Boolean) {
         this.currentUser = user

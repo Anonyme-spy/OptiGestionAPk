@@ -39,7 +39,10 @@ CREATE TABLE companies (
   address TEXT,
   website VARCHAR(255),
   tax_id VARCHAR(50),
+  logo_url VARCHAR(255),
   owner_id CHAR(36) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
@@ -70,6 +73,9 @@ CREATE TABLE entries (
   timestamp_millis BIGINT NOT NULL,
   version INT NOT NULL DEFAULT 1,
   updated_at_millis BIGINT NOT NULL,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 
@@ -77,33 +83,44 @@ CREATE TABLE entries (
 CREATE TABLE cost_centers (
   id CHAR(36) PRIMARY KEY,
   workspace_id CHAR(36) NOT NULL,
+  created_by_user_id CHAR(36) NOT NULL,
   code VARCHAR(20) NOT NULL,
   name VARCHAR(120) NOT NULL,
   icon VARCHAR(20) NOT NULL,
   monthly_budget DECIMAL(14,2) NOT NULL DEFAULT 0,
   version INT NOT NULL DEFAULT 1,
-  updated_at_millis BIGINT NOT NULL
+  updated_at_millis BIGINT NOT NULL,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 
 -- Budgets
 CREATE TABLE budgets (
   id CHAR(36) PRIMARY KEY,
   workspace_id CHAR(36) NOT NULL,
+  created_by_user_id CHAR(36) NOT NULL,
   name VARCHAR(120) NOT NULL,
   icon VARCHAR(20) NOT NULL,
   budget_amount DECIMAL(14,2) NOT NULL,
   ledger_account VARCHAR(20),
   version INT NOT NULL DEFAULT 1,
-  updated_at_millis BIGINT NOT NULL
+  updated_at_millis BIGINT NOT NULL,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 ```
 
 ## 3. API Endpoints
 
-### Authentication
-- `POST /auth/register`: Create a `PARTICULIER` or `ENTREPRISE` (as `OWNER`).
-- `POST /auth/login`: Issue JWTs.
-- `POST /auth/refresh`: Renew tokens.
+### Authentication (Online Only)
+- **Constraint**: Signup and Login require an active internet connection.
+- `POST /auth/register`: Create a `PARTICULIER` or `ENTREPRISE` (as `OWNER`). Returns `AuthResponse`.
+- `POST /auth/login`: Issue JWTs. Returns `AuthResponse`.
+- `POST /auth/refresh`: Renew tokens. Returns `AuthResponse`.
 
 ### Workspace & Sync (Critical)
 - `GET /sync/pull?since_version=X`: Fetch all records across all tables where `version > X`.

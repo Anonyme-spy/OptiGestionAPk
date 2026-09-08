@@ -1,5 +1,21 @@
 # OptiGestion — mise à niveau "vraie app de gestion financière"
 
+## Round 17 — Initialisation Automatique du Backend
+
+### Amélioration de la robustesse du Backend
+- **Auto-initialisation de la base de données** : Correction de l'erreur `ER_NO_SUCH_TABLE` au premier démarrage.
+    - Le backend Node.js vérifie désormais l'existence des tables au lancement.
+    - Création automatique du schéma (tables, index, enums) si nécessaire via [`db.service.ts`](file:///mnt/extra/My project/optigestion-backend/src/services/db.service.ts).
+    - Plus besoin de lancer manuellement `npm run db:init` avant de démarrer le serveur.
+
+## Round 16 — Sécurisation du Réseau & Autorisation Cleartext
+
+### Correction du blocage réseau
+- **Autorisation du trafic en clair (HTTP)** : Correction de l'erreur "Cleartext communication not permitted".
+    - Création du fichier [`network_security_config.xml`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/res/xml/network_security_config.xml).
+    - Configuration spécifique pour autoriser les adresses locales (`192.168.178.25`, `10.0.2.2`, `localhost`).
+    - Mise à jour du [`AndroidManifest.xml`](file:///mnt/My_files/My_project_source/androidStudioProjects/OptiGestion/app/src/main/AndroidManifest.xml) pour inclure la permission `INTERNET` et lier la configuration de sécurité.
+
 ## Round 15 — Configuration Réseau & Backend Readiness
 
 ### Préparation de la Connexion API

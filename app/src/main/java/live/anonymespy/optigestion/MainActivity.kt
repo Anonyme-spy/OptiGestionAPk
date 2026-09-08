@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         // leaves everything empty if this is the first launch —
         // OptiGestionRoot decides from there whether to show onboarding or
         // the app itself.
+        SecurePrefs.init(applicationContext)
         AppRepository.init(applicationContext)
 
         setContent {

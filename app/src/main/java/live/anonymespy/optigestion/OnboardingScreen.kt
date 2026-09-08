@@ -12,9 +12,11 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -30,9 +32,8 @@ import java.util.UUID
  * and data setup (template vs empty).
  */
 @Composable
-fun OnboardingScreen(
-    onComplete: (User, AppMode, Boolean) -> Unit
-) {
+fun OnboardingScreen() {
+    val scope = rememberCoroutineScope()
     var authMethod by remember { mutableStateOf<AuthMethod?>(null) }
     var accountType by remember { mutableStateOf<AccountType?>(null) }
     var enterpriseRole by remember { mutableStateOf<EnterpriseRole?>(null) }
@@ -45,6 +46,11 @@ fun OnboardingScreen(
     var companyName by remember { mutableStateOf("") }
     var industry by remember { mutableStateOf("") }
 
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,72 +60,121 @@ fun OnboardingScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        when {
-            authMethod == null -> {
-                AuthMethodStep(onSelected = { authMethod = it })
-            }
-            authMethod == AuthMethod.SIGNUP && accountType == null -> {
-                SignUpFormStep(
-                    email = email, onEmailChange = { email = it },
-                    password = password, onPasswordChange = { password = it },
-                    name = displayName, onNameChange = { displayName = it },
-                    onBack = { authMethod = null },
-                    onNext = { accountType = it }
-                )
-            }
-            authMethod == AuthMethod.LOGIN -> {
-                LoginFormStep(
-                    email = email, onEmailChange = { email = it },
-                    password = password, onPasswordChange = { password = it },
-                    onBack = { authMethod = null },
-                    onLogin = {
-                        val mockUser = User(id = UUID.randomUUID().toString(), email = email, displayName = "Utilisateur", accountType = AccountType.PARTICULIER)
-                        onComplete(mockUser, AppMode.PRO, false)
-                    }
-                )
-            }
-            authMethod == AuthMethod.GUEST && appMode == null -> {
-                ModeSelectionStep(
-                    onBack = { authMethod = null },
-                    onSelected = { appMode = it; accountType = AccountType.GUEST }
-                )
-            }
-            accountType == AccountType.ENTREPRISE && companyName.isEmpty() -> {
-                CompanyInfoStep(
-                    name = companyName, onNameChange = { companyName = it },
-                    industry = industry, onIndustryChange = { industry = it },
-                    onBack = { accountType = null },
-                    onNext = { companyName = it; enterpriseRole = EnterpriseRole.OWNER }
-                )
-            }
-            accountType == AccountType.PARTICULIER && appMode == null -> {
-                ModeSelectionStep(
-                    onBack = { accountType = null },
-                    onSelected = { appMode = it }
-                )
-            }
-            else -> {
-                val finalMode = appMode ?: AppMode.PRO
-                val user = User(
-                    id = UUID.randomUUID().toString(),
-                    email = if (authMethod == AuthMethod.GUEST) null else email,
-                    displayName = if (authMethod == AuthMethod.GUEST) "Invité" else displayName,
-                    accountType = accountType ?: AccountType.GUEST,
-                    companyName = companyName.takeIf { it.isNotEmpty() },
-                    enterpriseRole = enterpriseRole,
-                    createdAtMillis = System.currentTimeMillis()
-                )
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage!!,
+                color = CaeColors.Error,
+                modifier = Modifier.padding(bottom = 16.dp),
+                textAlign = TextAlign.Center
+            )
+        }
 
-                SetupSelectionStep(
-                    mode = finalMode,
-                    onBack = {
-                        if (accountType == AccountType.ENTREPRISE) companyName = ""
-                        else if (accountType == AccountType.PARTICULIER) appMode = null
-                        else authMethod = null
-                    },
-                    onLoadTemplate = { onComplete(user, finalMode, true) },
-                    onStartEmpty = { onComplete(user, finalMode, false) }
-                )
+        if (isLoading) {
+            CircularProgressIndicator(color = CaeColors.Primary)
+        } else {
+            when {
+                authMethod == null -> {
+                    AuthMethodStep(onSelected = { authMethod = it; errorMessage = null })
+                }
+                authMethod == AuthMethod.SIGNUP && accountType == null -> {
+                    SignUpFormStep(
+                        email = email, onEmailChange = { email = it },
+                        password = password, onPasswordChange = { password = it },
+                        name = displayName, onNameChange = { displayName = it },
+                        onBack = { authMethod = null; errorMessage = null },
+                        onNext = { accountType = it; errorMessage = null }
+                    )
+                }
+                authMethod == AuthMethod.LOGIN -> {
+                    LoginFormStep(
+                        email = email, onEmailChange = { email = it },
+                        password = password, onPasswordChange = { password = it },
+                        onBack = { authMethod = null; errorMessage = null },
+                        onLogin = {
+                            scope.launch {
+                                isLoading = true
+                                AppRepository.login(email, password)
+                                    .onSuccess { isLoading = false }
+                                    .onFailure {
+                                        isLoading = false
+                                        errorMessage = it.message
+                                    }
+                            }
+                        }
+                    )
+                }
+                accountType == AccountType.ENTREPRISE && companyName.isEmpty() -> {
+                    CompanyInfoStep(
+                        name = companyName, onNameChange = { companyName = it },
+                        industry = industry, onIndustryChange = { industry = it },
+                        onBack = { accountType = null; errorMessage = null },
+                        onNext = { companyName = it; enterpriseRole = EnterpriseRole.OWNER }
+                    )
+                }
+                accountType == AccountType.PARTICULIER && appMode == null -> {
+                    ModeSelectionStep(
+                        onBack = { accountType = null; errorMessage = null },
+                        onSelected = { appMode = it }
+                    )
+                }
+                else -> {
+                    val finalMode = appMode ?: AppMode.PRO
+                    val useTemplate = true // Default or could ask
+
+                    SetupSelectionStep(
+                        mode = finalMode,
+                        onBack = {
+                            if (authMethod == AuthMethod.GUEST) authMethod = null
+                            else if (accountType == AccountType.ENTREPRISE) companyName = ""
+                            else if (accountType == AccountType.PARTICULIER) appMode = null
+                            errorMessage = null
+                        },
+                        onLoadTemplate = {
+                            if (authMethod == AuthMethod.GUEST) {
+                                AppRepository.startGuest(finalMode, true)
+                            } else {
+                                scope.launch {
+                                    isLoading = true
+                                    val req = RegisterRequest(
+                                        email = email,
+                                        password = password,
+                                        displayName = displayName,
+                                        accountType = accountType!!,
+                                        company = if (accountType == AccountType.ENTREPRISE) CompanyRegisterInfo(name = companyName, industry = industry) else null
+                                    )
+                                    AppRepository.signup(req)
+                                        .onSuccess { isLoading = false }
+                                        .onFailure {
+                                            isLoading = false
+                                            errorMessage = it.message
+                                        }
+                                }
+                            }
+                        },
+                        onStartEmpty = {
+                            if (authMethod == AuthMethod.GUEST) {
+                                AppRepository.startGuest(finalMode, false)
+                            } else {
+                                scope.launch {
+                                    isLoading = true
+                                    val req = RegisterRequest(
+                                        email = email,
+                                        password = password,
+                                        displayName = displayName,
+                                        accountType = accountType!!,
+                                        company = if (accountType == AccountType.ENTREPRISE) CompanyRegisterInfo(name = companyName, industry = industry) else null
+                                    )
+                                    AppRepository.signup(req)
+                                        .onSuccess { isLoading = false }
+                                        .onFailure {
+                                            isLoading = false
+                                            errorMessage = it.message
+                                        }
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
