@@ -22,6 +22,12 @@ import java.util.UUID
  * entry) is instantly reflected everywhere it's used (Dashboard KPIs,
  * Stats charts, Cost Centers, etc). State also survives process death via
  * SharedPreferences.
+ *
+ * Source unique de vérité à l'échelle de l'application. Chaque écran lit et écrit dans
+ * cet objet, de sorte qu'une valeur modifiée sur un écran (ex: ajout d'une entrée
+ * dans Feuilles) est instantanément reflétée partout où elle est utilisée (KPI du Tableau de bord,
+ * graphiques de Statistiques, Centres de Coûts, etc.). L'état survit également à la fermeture du processus via
+ * SharedPreferences.
  */
 object AppRepository {
 
@@ -41,48 +47,60 @@ object AppRepository {
 
     private lateinit var prefs: SharedPreferences
 
-    /** True once the user has picked "Load template" or "Start empty" on this device. */
+    /** True once the user has picked "Load template" or "Start empty" on this device.
+     * Vrai une fois que l'utilisateur a choisi "Charger un modèle" ou "Démarrer vide" sur cet appareil. */
     var hasChosenSetup by mutableStateOf(false)
         private set
 
     var periodLabel by mutableStateOf(currentPeriodLabel())
 
-    /** App-wide currency, changeable any time from the Settings screen. */
+    /** App-wide currency, changeable any time from the Settings screen.
+     * Devise à l'échelle de l'application, modifiable à tout moment depuis l'écran des Paramètres. */
     var currency by mutableStateOf(Currency.USD)
 
-    /** App-wide light/dark/AMOLED preference, changeable any time from the Settings screen. */
+    /** App-wide light/dark/AMOLED preference, changeable any time from the Settings screen.
+     * Préférence clair/sombre/AMOLED à l'échelle de l'application, modifiable à tout moment depuis l'écran des Paramètres. */
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
 
-    /** Cash currently available, used to compute the runway KPI on Dashboard/Reports. */
+    /** Cash currently available, used to compute the runway KPI on Dashboard/Reports.
+     * Liquidités actuellement disponibles, utilisées pour calculer le KPI de piste sur le Tableau de bord / Rapports. */
     var cashOnHand by mutableStateOf(0.0)
         private set
 
-    /** Display language. Only Dashboard/Navigation/Settings are localized so far — see Strings.kt. */
+    /** Display language. Only Dashboard/Navigation/Settings are localized so far — see Strings.kt.
+     * Langue d'affichage. Seuls le Tableau de bord, la Navigation et les Paramètres sont localisés pour l'instant — voir Strings.kt. */
     var language by mutableStateOf(AppLanguage.FRENCH)
         private set
 
-    /** The current UI mode (Simple vs Pro). */
+    /** The current UI mode (Simple vs Pro).
+     * Le mode d'interface actuel (Simple vs Pro). */
     var appMode by mutableStateOf(AppMode.PRO)
         private set
 
-    /** The current logged-in user profile (mocked). */
+    /** The current logged-in user profile (mocked).
+     * Le profil utilisateur actuellement connecté (simulé). */
     var currentUser by mutableStateOf<User?>(null)
         private set
 
-    /** App logo / icon identifier. Could be a resource name or a local file URI. */
+    /** App logo / icon identifier. Could be a resource name or a local file URI.
+     * Identifiant du logo / de l'icône de l'application. Peut être un nom de ressource ou un URI de fichier local. */
     var appLogo by mutableStateOf("default")
         private set
 
-    /** The transactional ledger shown on the Sheets screen. Empty by default. */
+    /** The transactional ledger shown on the Sheets screen. Empty by default.
+     * Le grand livre transactionnel affiché sur l'écran des Feuilles. Vide par défaut. */
     val entries: SnapshotStateList<SheetEntry> = mutableStateListOf()
 
-    /** Category-level budgets shown on the Budget vs Actual screen. Empty by default. */
+    /** Category-level budgets shown on the Budget vs Actual screen. Empty by default.
+     * Budgets au niveau des catégories affichés sur l'écran Budget vs Réalisé. Vide par défaut. */
     val budgetCategories: SnapshotStateList<BudgetCategoryUi> = mutableStateListOf()
 
-    /** Real, editable departments/cost centers shown on the Cost Centers screen. */
+    /** Real, editable departments/cost centers shown on the Cost Centers screen.
+     * Départements/centres de coûts réels et modifiables affichés sur l'écran des Centres de Coûts. */
     val costCenters: SnapshotStateList<CostCenter> = mutableStateListOf()
 
-    /** Planned total is simply the sum of every category's planned budget — one source of truth. */
+    /** Planned total is simply the sum of every category's planned budget — one source of truth.
+     * Le total prévu est simplement la somme du budget prévu de chaque catégorie — une seule source de vérité. */
     val plannedBudgetTotal: Double get() = budgetCategories.sumOf { it.budgetAmount }
 
     fun init(context: Context) {
@@ -125,50 +143,62 @@ object AppRepository {
         // cold start (covers the very first run after this feature ships, before
         // AppCompatDelegate has its own record of a choice). selectLanguage()
         // keeps the two in sync from here on for every subsequent change.
+        //
+        // Amorçage : assurez-vous que les paramètres régionaux par application correspondent à notre préférence enregistrée au
+        // démarrage à froid (couvre la toute première exécution après le déploiement de cette fonctionnalité, avant
+        // que AppCompatDelegate n'ait son propre enregistrement d'un choix). selectLanguage()
+        // maintient les deux en synchronisation à partir de là pour chaque changement ultérieur.
         applyAppLanguage(language)
         appLogo = prefs.getString(KEY_APP_LOGO, "default") ?: "default"
         hasChosenSetup = prefs.getBoolean(KEY_INITIALIZED, false)
         if (hasChosenSetup) restoreFromPrefs()
     }
 
-    /** Currency is a device setting, kept even across a full data reset. */
+    /** Currency is a device setting, kept even across a full data reset.
+     * La devise est un paramètre de l'appareil, conservé même après une réinitialisation complète des données. */
     fun selectCurrency(newCurrency: Currency) {
         currency = newCurrency
         if (::prefs.isInitialized) prefs.edit().putString(KEY_CURRENCY, newCurrency.name).apply()
     }
 
-    /** Theme mode is a device setting, kept even across a full data reset. */
+    /** Theme mode is a device setting, kept even across a full data reset.
+     * Le mode de thème est un paramètre de l'appareil, conservé même après une réinitialisation complète des données. */
     fun selectThemeMode(newMode: ThemeMode) {
         themeMode = newMode
         if (::prefs.isInitialized) prefs.edit().putString(KEY_THEME_MODE, newMode.name).apply()
     }
 
-    /** Cash on hand feeds the runway KPI. Kept even across a full data reset. */
+    /** Cash on hand feeds the runway KPI. Kept even across a full data reset.
+     * Les liquidités disponibles alimentent le KPI de piste. Conservé même après une réinitialisation complète des données. */
     fun selectCashOnHand(amount: Double) {
         cashOnHand = amount
         if (::prefs.isInitialized) prefs.edit().putFloat(KEY_CASH_ON_HAND, amount.toFloat()).apply()
     }
 
-    /** Display language is a device setting, kept even across a full data reset. */
+    /** Display language is a device setting, kept even across a full data reset.
+     * La langue d'affichage est un paramètre de l'appareil, conservé même après une réinitialisation complète des données. */
     fun selectLanguage(newLanguage: AppLanguage) {
         language = newLanguage
         if (::prefs.isInitialized) prefs.edit().putString(KEY_LANGUAGE, newLanguage.name).apply()
         applyAppLanguage(newLanguage)
     }
 
-    /** App logo is a device setting. */
+    /** App logo is a device setting.
+     * Le logo de l'application est un paramètre de l'appareil. */
     fun selectAppLogo(logo: String) {
         appLogo = logo
         if (::prefs.isInitialized) prefs.edit().putString(KEY_APP_LOGO, logo).apply()
     }
 
-    /** Updates the current user profile and persists it. */
+    /** Updates the current user profile and persists it.
+     * Met à jour le profil de l'utilisateur actuel et le persiste. */
     fun updateUserProfile(updated: User) {
         this.currentUser = updated
         persist()
     }
 
     /* ---------------- Onboarding & Auth ---------------- */
+    /* ---------------- Accueil & Auth ---------------- */
 
     suspend fun signup(request: RegisterRequest): Result<User> {
         return try {
@@ -267,7 +297,8 @@ object AppRepository {
         persist()
     }
 
-    /** Wipes all data and sends the user back to the template-choice screen. Currency/cash are kept. */
+    /** Wipes all data and sends the user back to the template-choice screen. Currency/cash are kept.
+     * Efface toutes les données et renvoie l'utilisateur à l'écran de choix de modèle. La devise et les liquidités sont conservées. */
     fun resetToOnboarding() {
         entries.clear()
         budgetCategories.clear()
@@ -285,14 +316,16 @@ object AppRepository {
             .apply()
     }
 
-    /** Total TVA component (Collected - Deductible). */
+    /** Total TVA component (Collected - Deductible).
+     * Composante TVA totale (Collectée - Déductible). */
     fun vatLiability(): Double {
         val collected = entries.filter { it.isCredit }.sumOf { it.taxAmount }
         val deductible = entries.filter { !it.isCredit }.sumOf { it.taxAmount }
         return collected - deductible
     }
 
-    /** Count of items waiting to be synced. */
+    /** Count of items waiting to be synced.
+     * Nombre d'éléments en attente de synchronisation. */
     fun pendingSyncCount(): Int {
         return entries.count { it.syncStatus == SyncStatus.PENDING } +
                budgetCategories.count { it.syncStatus == SyncStatus.PENDING } +
@@ -300,6 +333,7 @@ object AppRepository {
     }
 
     /* ---------------- Sheets entries ---------------- */
+    /* ---------------- Entrées des Feuilles ---------------- */
 
     fun addEntry(entry: SheetEntry) {
         val toAdd = entry.copy(syncStatus = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING)
@@ -319,6 +353,7 @@ object AppRepository {
     }
 
     /* ---------------- Budget categories ---------------- */
+    /* ---------------- Catégories budgétaires ---------------- */
 
     fun addBudgetCategory(name: String, icon: BudgetCategoryIcon, budgetAmount: Double, ledgerAccount: String = "") {
         val sync = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING
@@ -331,7 +366,8 @@ object AppRepository {
         persist()
     }
 
-    /** Budget categories whose actual spend has hit [thresholdPercent] of their planned budget. */
+    /** Budget categories whose actual spend has hit [thresholdPercent] of their planned budget.
+     * Catégories budgétaires dont les dépenses réelles ont atteint [thresholdPercent] de leur budget prévu. */
     fun budgetAlerts(thresholdPercent: Double = 90.0): List<BudgetAlert> =
         budgetCategories.mapNotNull { c ->
             if (c.budgetAmount <= 0.0) return@mapNotNull null
@@ -340,6 +376,7 @@ object AppRepository {
         }.sortedByDescending { it.percentUsed }
 
     /* ---------------- Cost centers ---------------- */
+    /* ---------------- Centres de coûts ---------------- */
 
     fun addCostCenter(code: String, name: String, icon: DepartmentIcon, monthlyBudget: Double) {
         val sync = if (currentUser?.accountType == AccountType.GUEST) SyncStatus.SYNCED else SyncStatus.PENDING
@@ -358,13 +395,15 @@ object AppRepository {
         persist()
     }
 
-    /** Total spend (debits only) posted against a given cost-center code. */
+    /** Total spend (debits only) posted against a given cost-center code.
+     * Dépense totale (débits uniquement) imputée à un code de centre de coûts donné. */
     fun costCenterSpend(code: String): Double {
         val useHt = appMode == AppMode.PRO
         return entries.filter { !it.isCredit && it.costCenterCode == code }.sumOf { if (useHt) it.amountHt else it.amountTtc }
     }
 
-    /** Every cost center with its live spend, sorted by how close to (or past) budget it is. */
+    /** Every cost center with its live spend, sorted by how close to (or past) budget it is.
+     * Chaque centre de coûts avec ses dépenses en direct, trié selon sa proximité (ou son dépassement) par rapport au budget. */
     fun departmentBudgets(): List<DepartmentBudget> =
         costCenters.map { cc ->
             val spend = costCenterSpend(cc.code)
@@ -412,7 +451,8 @@ object AppRepository {
         )
     }
 
-    /** Call after mutating a BudgetCategoryUi's actualInput/budgetAmount so it survives restart. */
+    /** Call after mutating a BudgetCategoryUi's actualInput/budgetAmount so it survives restart.
+     * Appel après avoir muté le actualInput/budgetAmount d'un BudgetCategoryUi pour qu'il survive au redémarrage. */
     fun persist() {
         if (!::prefs.isInitialized) return
         val entriesJson = JSONArray().apply {
@@ -572,6 +612,7 @@ object AppRepository {
     }
 
     /* ---------------- Derived analytics (Dashboard + Stats read these) ---------------- */
+    /* ---------------- Analyses dérivées (Tableau de bord + Statistiques les lisent) ---------------- */
 
     fun netMargin(): Double {
         val useHt = appMode == AppMode.PRO
@@ -590,14 +631,16 @@ object AppRepository {
         return entries.filter { it.isCredit }.sumOf { if (useHt) it.amountHt else it.amountTtc }
     }
 
-    /** Net margin as a percentage of revenue, or null when there's no revenue to divide by. */
+    /** Net margin as a percentage of revenue, or null when there's no revenue to divide by.
+     * Marge nette en pourcentage du revenu, ou null lorsqu'il n'y a pas de revenu par lequel diviser. */
     fun marginPercent(): Double? {
         val revenue = totalRevenue()
         if (revenue == 0.0) return null
         return (netMargin() / revenue) * 100
     }
 
-    /** Average monthly cash outflow over the most recent (up to 3) months with expense data. */
+    /** Average monthly cash outflow over the most recent (up to 3) months with expense data.
+     * Sortie de fonds mensuelle moyenne sur les mois les plus récents (jusqu'à 3) avec des données de dépenses. */
     fun burnRate(): Double {
         // Burn rate is a cash-flow KPI, so always use TTC (actual cash leaving)
         val byMonth = entries.filter { !it.isCredit }
@@ -610,14 +653,16 @@ object AppRepository {
         return byMonth.sumOf { it.second } / byMonth.size
     }
 
-    /** Months of runway left at the current burn rate. Null means burn rate is 0 (infinite runway). */
+    /** Months of runway left at the current burn rate. Null means burn rate is 0 (infinite runway).
+     * Mois de piste restants au taux de combustion actuel. Null signifie que le taux de combustion est de 0 (piste infinie). */
     fun runwayMonths(): Double? {
         val burn = burnRate()
         if (burn <= 0.0) return null
         return cashOnHand / burn
     }
 
-    /** % change in monthly revenue between the two most recent months that had any revenue. */
+    /** % change in monthly revenue between the two most recent months that had any revenue.
+     * Variation en % du revenu mensuel entre les deux mois les plus récents ayant eu des revenus. */
     fun revenueGrowthPercent(): Double? {
         val byMonth = entries.filter { it.isCredit }
             .groupBy { monthKeyAndLabel(it.timestampMillis).first }
@@ -632,7 +677,8 @@ object AppRepository {
         return ((latest - previous) / previous) * 100
     }
 
-    /** Top cost centers by spend, for the Dashboard bar chart. */
+    /** Top cost centers by spend, for the Dashboard bar chart.
+     * Principaux centres de coûts par dépense, pour le graphique à barres du Tableau de bord. */
     fun costCenterBars(limit: Int = 4): List<CostCenterBar> {
         val useHt = appMode == AppMode.PRO
         val byCenterCode = entries.filter { !it.isCredit }
@@ -682,7 +728,8 @@ object AppRepository {
         }.filter { it.percent > 0 }
     }
 
-    /** Net margin per month (last 6 months with data), normalized to 0..100 for the line chart. */
+    /** Net margin per month (last 6 months with data), normalized to 0..100 for the line chart.
+     * Marge nette par mois (6 derniers mois avec données), normalisée de 0 à 100 pour le graphique linéaire. */
     fun profitabilityTrend(): List<TrendPoint> {
         if (entries.isEmpty()) return emptyList()
         val useHt = appMode == AppMode.PRO
@@ -714,7 +761,8 @@ object AppRepository {
         return "$sign${formatPercent(delta.toDouble())}%"
     }
 
-    /** Income vs expense per month (last [limit] months with data), for the Reports cash-flow chart. */
+    /** Income vs expense per month (last [limit] months with data), for the Reports cash-flow chart.
+     * Revenus vs dépenses par mois (derniers [limit] mois avec données), pour le graphique de flux de trésorerie des Rapports. */
     fun cashFlowByMonth(limit: Int = 6): List<CashFlowPoint> {
         if (entries.isEmpty()) return emptyList()
         // Cash flow is about actual cash, so always use TTC
@@ -731,7 +779,8 @@ object AppRepository {
             }
     }
 
-    /** Full ledger as CSV text, for the Reports/Settings export feature. */
+    /** Full ledger as CSV text, for the Reports/Settings export feature.
+     * Grand livre complet au format texte CSV, pour la fonctionnalité d'exportation des Rapports/Paramètres. */
     fun exportCsv(): String {
         val isPro = appMode == AppMode.PRO
         val sb = StringBuilder()

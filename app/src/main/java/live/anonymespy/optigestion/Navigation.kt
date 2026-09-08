@@ -30,6 +30,10 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
  * Top-level gate: shows the onboarding template-choice screen until the
  * user has made a choice (fresh install, or after a manual reset), then
  * hands off to the real app.
+ *
+ * Porte de haut niveau : affiche l'écran de choix de modèle de bienvenue jusqu'à ce que
+ * l'utilisateur ait fait un choix (nouvelle installation, ou après une réinitialisation manuelle), puis
+ * passe la main à l'application réelle.
  */
 @Composable
 fun OptiGestionRoot(isWideScreen: Boolean = false) {
@@ -47,6 +51,14 @@ fun OptiGestionRoot(isWideScreen: Boolean = false) {
  * screens).
  *
  * Requires the Navigation Compose dependency:
+ *   implementation("androidx.navigation:navigation-compose:2.8.0")
+ *
+ * Composable racine qui lie ensemble les cinq écrans CAE Analytics
+ * (Tableau de bord, Feuilles, Analyse -> Budget vs Réalisé, Centres de Coûts, Stats ->
+ * Rapports) avec une barre supérieure partagée, une navigation inférieure (mobile) et un rail latéral (écrans
+ * larges).
+ *
+ * Nécessite la dépendance Navigation Compose :
  *   implementation("androidx.navigation:navigation-compose:2.8.0")
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,7 +159,8 @@ fun NavDestination.navLabel(): String {
     }
 }
 
-/** Localized title shown in the shared top app bar. */
+/** Localized title shown in the shared top app bar.
+ * Titre localisé affiché dans la barre d'application supérieure partagée. */
 @Composable
 fun NavDestination.topBarTitle(): String {
     val isPro = AppRepository.appMode == AppMode.PRO
@@ -163,6 +176,7 @@ fun NavDestination.topBarTitle(): String {
 
 /* ============================================================
  *  SHARED TOP APP BAR
+ *  BARRE D'APPLICATION SUPÉRIEURE PARTAGÉE
  * ============================================================ */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -189,10 +203,12 @@ private fun CaeTopAppBar(
                     contentAlignment = Alignment.Center
                 ) {
                     // 1. If user has custom avatar URL (backend-ready)
+                    // 1. Si l'utilisateur a une URL d'avatar personnalisée (prêt pour le backend)
                     if (user != null && !user.avatarUrl.isNullOrBlank()) {
                         Text(text = user.displayName.firstOrNull()?.toString() ?: "?", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnPrimaryContainer)
                     } else {
                         // 2. Fallback to chosen App Logo from Settings
+                        // 2. Solution de repli sur le logo de l'application choisi dans les paramètres
                         val logoIcon = when (AppRepository.appLogo) {
                             "analytics" -> Icons.Filled.Analytics
                             "savings" -> Icons.Filled.Savings
@@ -280,6 +296,7 @@ private fun SettingsTopAppBar(onBack: () -> Unit) {
 
 /* ============================================================
  *  NAV ICON MAPPING (shared by bottom bar + side rail)
+ *  MAPPAGE D'ICÔNE DE NAVIGATION (partagé par la barre inférieure + le rail latéral)
  * ============================================================ */
 
 private fun NavDestination.icon(): ImageVector = when (this) {
@@ -293,6 +310,7 @@ private fun NavDestination.icon(): ImageVector = when (this) {
 
 /* ============================================================
  *  BOTTOM NAV BAR (mobile)
+ *  BARRE DE NAVIGATION INFÉRIEURE (mobile)
  * ============================================================ */
 
 @Composable
@@ -335,6 +353,7 @@ private fun CaeBottomNavBar(
 
 /* ============================================================
  *  SIDE NAV RAIL (wide / desktop screens)
+ *  RAIL DE NAVIGATION LATÉRAL (écrans larges / bureau)
  * ============================================================ */
 
 @Composable

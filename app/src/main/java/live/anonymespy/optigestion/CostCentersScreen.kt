@@ -29,6 +29,11 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
  * live from AppRepository.entries (any Sheets entry whose costCenterCode
  * matches), so this screen — and the dropdown Sheets now offers when
  * picking a cost center — are always in sync.
+ *
+ * Départements/centres de coûts réels et modifiables. La dépense pour chacun est dérivée
+ * en direct de AppRepository.entries (toute entrée de Feuilles dont le costCenterCode
+ * correspond), donc cet écran — et le menu déroulant que Feuilles propose désormais lors du
+ * choix d'un centre de coûts — sont toujours synchronisés.
  */
 @Composable
 fun CostCentersScreen() {
@@ -111,6 +116,7 @@ fun CostCentersScreen() {
 }
 
 /* ---------------- Empty state ---------------- */
+/* ---------------- État vide ---------------- */
 
 @Composable
 private fun EmptyCostCentersState(onAdd: () -> Unit, appMode: AppMode) {
@@ -280,6 +286,11 @@ private fun DepartmentIconBadge(icon: DepartmentIcon) {
  * - Under budget (<=100%): a single primary-colored fill up to [percent].
  * - Over budget (>100%): a full primary fill, plus a red overflow segment
  *   representing the amount past 100%, mirroring the original design.
+ *
+ * Affiche la barre de progression du budget.
+ * - En dessous du budget (<=100%) : un remplissage unique de la couleur primaire jusqu'à [percent].
+ * - Dépassement de budget (>100%) : un remplissage primaire complet, plus un segment de débordement rouge
+ *   représentant le montant dépassant 100%, reflétant le design original.
  */
 @Composable
 private fun BudgetProgressBar(percent: Int, isOverBudget: Boolean) {
@@ -320,6 +331,7 @@ private fun BudgetProgressBar(percent: Int, isOverBudget: Boolean) {
 }
 
 /* ---------------- Add / edit form ---------------- */
+/* ---------------- Formulaire d'ajout / édition ---------------- */
 
 @Composable
 private fun CostCenterFormDialog(

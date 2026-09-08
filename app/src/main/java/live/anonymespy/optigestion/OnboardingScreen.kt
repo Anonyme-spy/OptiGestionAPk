@@ -30,6 +30,10 @@ import java.util.UUID
  * First-run (and post-reset) screen. Handles the full multi-step onboarding
  * for account type, roles (enterprise), expertise level (particulier),
  * and data setup (template vs empty).
+ *
+ * Écran de première exécution (et post-réinitialisation). Gère le processus de bienvenue
+ * complet en plusieurs étapes pour le type de compte, les rôles (entreprise), le niveau d'expertise
+ * (particulier) et la configuration des données (modèle vs vide).
  */
 @Composable
 fun OnboardingScreen() {
@@ -40,6 +44,7 @@ fun OnboardingScreen() {
     var appMode by remember { mutableStateOf<AppMode?>(null) }
 
     // Form data
+    // Données du formulaire
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var displayName by remember { mutableStateOf("") }

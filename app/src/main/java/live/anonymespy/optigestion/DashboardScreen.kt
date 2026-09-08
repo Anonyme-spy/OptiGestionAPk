@@ -28,6 +28,10 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
  * tiles: one hero card (net margin, with a revenue/cost breakdown bar),
  * a row of three supporting metrics, then charts and activity below.
  *
+ * Repensé autour d'une hiérarchie claire unique au lieu de quatre tuiles de même poids :
+ * une carte héro (marge nette, avec une barre de répartition revenus/coûts),
+ * une rangée de trois métriques de soutien, puis des graphiques et l'activité ci-dessous.
+ *
  * DeltaBadge lives in SharedComponents.kt, not here — it's also used by
  * StatsScreen.kt, and keeping it screen-local was exactly what broke that
  * file the last time this screen got redesigned.
@@ -35,6 +39,7 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
 @Composable
 fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
     val entries = AppRepository.entries // observing this list keeps the whole screen live
+                                        // l'observation de cette liste maintient tout l'écran à jour
     val budgetCategories = AppRepository.budgetCategories
 
     val netMargin = remember(entries.toList()) { AppRepository.netMargin() }
@@ -93,6 +98,7 @@ fun DashboardScreen(onNavigate: (NavDestination) -> Unit = {}) {
 }
 
 /* ---------------- Hero card ---------------- */
+/* ---------------- Carte héro ---------------- */
 
 @Composable
 private fun HeroMarginCard(netMargin: Double, revenue: Double, costs: Double, appMode: AppMode) {
@@ -181,6 +187,7 @@ private fun HeroDeltaBadge(isPositive: Boolean, label: String) {
 }
 
 /* ---------------- Secondary metrics row ---------------- */
+/* ---------------- Rangée de métriques secondaires ---------------- */
 
 @Composable
 private fun SecondaryMetricsRow(revenue: Double, costs: Double, runway: Double?, appMode: AppMode) {
@@ -222,6 +229,7 @@ private fun SecondaryMetricTile(label: String, value: String, valueColor: androi
 }
 
 /* ---------------- Quick actions ---------------- */
+/* ---------------- Actions rapides ---------------- */
 
 @Composable
 private fun QuickActionsRow(onNavigate: (NavDestination) -> Unit) {
@@ -250,6 +258,7 @@ private fun QuickActionChip(icon: ImageVector, label: String, modifier: Modifier
 }
 
 /* ---------------- Budget alert banner ---------------- */
+/* ---------------- Bannière d'alerte budgétaire ---------------- */
 
 @Composable
 private fun BudgetAlertBanner(alerts: List<BudgetAlert>, onClick: () -> Unit) {
@@ -339,6 +348,7 @@ private fun DashboardEmptyState() {
 }
 
 /* ---------------- Cost by cost center (bar chart) ---------------- */
+/* ---------------- Coût par centre de coûts (graphique à barres) ---------------- */
 
 @Composable
 private fun CostCenterSection(bars: List<CostCenterBar>) {
@@ -398,6 +408,7 @@ private fun CostCenterSection(bars: List<CostCenterBar>) {
 }
 
 /* ---------------- Recent activity ---------------- */
+/* ---------------- Activité récente ---------------- */
 
 @Composable
 private fun RecentActivitySection(items: List<ActivityItem>) {

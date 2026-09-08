@@ -51,6 +51,7 @@ fun ProfileScreen() {
             .padding(16.dp)
     ) {
         // Header with big avatar
+        // En-tête avec un grand avatar
         Column(
             modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -64,6 +65,7 @@ fun ProfileScreen() {
             ) {
                 if (avatarUrl.isNotBlank()) {
                     // In a real app, use Coil/Glide to load URL. For now, show initial.
+                    // Dans une application réelle, utilisez Coil/Glide pour charger l'URL. Pour l'instant, affichez l'initiale.
                     Text(text = displayName.firstOrNull()?.toString() ?: "?", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = CaeColors.OnPrimaryContainer)
                 } else {
                     Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(60.dp), tint = CaeColors.OnPrimaryContainer)

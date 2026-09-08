@@ -4,6 +4,10 @@ package live.anonymespy.optigestion
  * Example data offered on the onboarding screen via "Charger un modèle".
  * Nothing here is loaded automatically — the app starts empty unless the
  * user explicitly picks this option (see AppRepository.loadTemplate()).
+ *
+ * Exemples de données proposés sur l'écran de bienvenue via "Charger un modèle".
+ * Rien ici n'est chargé automatiquement — l'application démarre vide à moins que
+ * l'utilisateur ne choisisse explicitement cette option (voir AppRepository.loadTemplate()).
  */
 object TemplateData {
 
@@ -98,6 +102,10 @@ object TemplateData {
      * Real, editable cost centers matching the costCenterCode values used
      * above in sheetEntries(), so the Cost Centers screen and the Sheets
      * cost-center dropdown are populated and in sync out of the box.
+     *
+     * Centres de coûts réels et modifiables correspondant aux valeurs costCenterCode utilisées
+     * ci-dessus dans sheetEntries(), afin que l'écran des Centres de Coûts et le menu
+     * déroulant des centres de coûts des Feuilles soient remplis et synchronisés dès le départ.
      */
     fun costCenters(): List<CostCenter> = listOf(
         CostCenter(code = "IT-01", name = "Infrastructure IT", icon = DepartmentIcon.ADMIN, monthlyBudget = 150_000.0),

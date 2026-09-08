@@ -85,6 +85,7 @@ fun BudgetVsActualScreen() {
 }
 
 /* ---------------- Header ---------------- */
+/* ---------------- En-tête ---------------- */
 
 @Composable
 private fun HeaderRow(periodLabel: String, appMode: AppMode) {
@@ -101,6 +102,7 @@ private fun HeaderRow(periodLabel: String, appMode: AppMode) {
 }
 
 /* ---------------- Empty state ---------------- */
+/* ---------------- État vide ---------------- */
 
 @Composable
 private fun EmptyBudgetState(onAddCategory: () -> Unit) {
@@ -134,6 +136,7 @@ private fun EmptyBudgetState(onAddCategory: () -> Unit) {
 }
 
 /* ---------------- Overview KPI card ---------------- */
+/* ---------------- Carte KPI de vue d'ensemble ---------------- */
 
 @Composable
 private fun OverviewCard(
@@ -201,6 +204,7 @@ private fun VarianceBadge(percent: Double, isUnderBudget: Boolean) {
 }
 
 /* ---------------- Category breakdown (editable) ---------------- */
+/* ---------------- Répartition par catégorie (modifiable) ---------------- */
 
 @Composable
 private fun CategoryBreakdownCard(
@@ -317,6 +321,7 @@ private fun BudgetCategoryIcon.toImageVector(): ImageVector = when (this) {
 }
 
 /* ---------------- Add category dialog ---------------- */
+/* ---------------- Dialogue d'ajout de catégorie ---------------- */
 
 @Composable
 private fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (String, BudgetCategoryIcon, Double, String) -> Unit, appMode: AppMode) {

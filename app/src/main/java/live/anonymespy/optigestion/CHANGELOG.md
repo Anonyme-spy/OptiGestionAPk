@@ -1,5 +1,13 @@
 # OptiGestion — mise à niveau "vraie app de gestion financière"
 
+## Round 18 — Documentation Bilingue (EN/FR)
+
+### Amélioration de la maintenance du code
+- **Commentaires Bilingues** : Ajout systématique de traductions françaises pour chaque commentaire existant dans l'intégralité du projet (Android et Backend).
+    - Les commentaires originaux en anglais sont préservés.
+    - Simplifie la collaboration pour les développeurs francophones et anglophones.
+    - Couvre les fichiers source Kotlin (.kt), TypeScript (.ts) et les scripts SQL.
+
 ## Round 17 — Initialisation Automatique du Backend
 
 ### Amélioration de la robustesse du Backend

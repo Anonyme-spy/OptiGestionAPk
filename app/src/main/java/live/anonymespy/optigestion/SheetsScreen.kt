@@ -30,6 +30,10 @@ import androidx.compose.ui.unit.sp
  * "Feuille de Saisie" — the data-entry spreadsheet screen. Reads and writes
  * directly to AppRepository so every entry created here immediately shows
  * up in Dashboard KPIs, the cost-center chart and the Stats screen.
+ *
+ * "Feuille de Saisie" — l'écran de saisie de données de type tableur. Lit et écrit
+ * directement dans AppRepository afin que chaque entrée créée ici apparaisse immédiatement
+ * dans les KPI du Tableau de bord, le graphique des centres de coûts et l'écran des Statistiques.
  */
 @Composable
 fun SheetsScreen() {
@@ -49,6 +53,7 @@ fun SheetsScreen() {
             .filter { statusFilter == null || it.status == statusFilter }
             .filter {
                 // Roles logic
+                // Logique des rôles
                 when (currentUser?.enterpriseRole) {
                     EnterpriseRole.EMPLOYE -> it.createdByUserId == currentUser.id
                     else -> true // Admin/RH/Particulier see all
@@ -142,6 +147,7 @@ fun SheetsScreen() {
 }
 
 /* ---------------- Empty state ---------------- */
+/* ---------------- État vide ---------------- */
 
 @Composable
 private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
@@ -182,6 +188,7 @@ private fun EmptySheetsState(hasAnyEntries: Boolean, onAddEntry: () -> Unit) {
 }
 
 /* ---------------- Search ---------------- */
+/* ---------------- Recherche ---------------- */
 
 @Composable
 private fun SearchField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -208,6 +215,7 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, modifier
 }
 
 /* ---------------- Controls bar ---------------- */
+/* ---------------- Barre de contrôles ---------------- */
 
 @Composable
 private fun ControlsBar(
@@ -267,6 +275,7 @@ private fun ControlChip(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 /* ---------------- Table ---------------- */
+/* ---------------- Tableau ---------------- */
 
 private const val COL_CATEGORY_WEIGHT = 2f
 private const val COL_AMOUNT_WEIGHT = 1f
@@ -370,6 +379,7 @@ private fun SheetCategoryIcon.toImageVector(): ImageVector = when (this) {
 }
 
 /* ---------------- Add / edit form ---------------- */
+/* ---------------- Formulaire d'ajout / édition ---------------- */
 
 @Composable
 private fun EntryFormDialog(

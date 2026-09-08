@@ -2,6 +2,7 @@ package live.anonymespy.optigestion
 
 /**
  * DTOs for API requests and responses.
+ * DTO pour les requêtes et réponses API.
  */
 
 data class AuthResponse(

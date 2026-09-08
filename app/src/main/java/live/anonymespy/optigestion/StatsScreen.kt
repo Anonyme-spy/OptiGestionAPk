@@ -135,6 +135,7 @@ fun StatsScreen() {
 }
 
 /* ---------------- Period selector ---------------- */
+/* ---------------- Sélecteur de période ---------------- */
 
 @Composable
 private fun PeriodSelectorRow(selected: PeriodFilter, onSelect: (PeriodFilter) -> Unit) {
@@ -157,6 +158,7 @@ private fun PeriodSelectorRow(selected: PeriodFilter, onSelect: (PeriodFilter) -
 }
 
 /* ---------------- KPI strip (margin, burn rate, runway, growth) ---------------- */
+/* ---------------- Bande KPI (marge, taux de combustion, piste, croissance) ---------------- */
 
 @Composable
 private fun KpiStripSection(appMode: AppMode) {
@@ -195,6 +197,7 @@ private fun MetricTile(label: String, value: String, modifier: Modifier = Modifi
 }
 
 /* ---------------- Period summary ---------------- */
+/* ---------------- Résumé de la période ---------------- */
 
 @Composable
 private fun PeriodSummaryCard(filtered: List<SheetEntry>, filter: PeriodFilter, appMode: AppMode) {
@@ -284,6 +287,7 @@ private fun PlRow(label: String, value: Double, color: Color, isBold: Boolean = 
 }
 
 /* ---------------- Budget alerts ---------------- */
+/* ---------------- Alertes budgétaires ---------------- */
 
 @Composable
 private fun BudgetAlertsSection(alerts: List<BudgetAlert>) {
@@ -312,6 +316,7 @@ private fun BudgetAlertsSection(alerts: List<BudgetAlert>) {
 }
 
 /* ---------------- Cash flow (income vs expense bar chart) ---------------- */
+/* ---------------- Flux de trésorerie (graphique à barres revenus vs dépenses) ---------------- */
 
 @Composable
 private fun CashFlowSection(data: List<CashFlowPoint>, appMode: AppMode) {
@@ -395,6 +400,7 @@ private fun CashFlowBarChart(data: List<CashFlowPoint>, modifier: Modifier = Mod
 }
 
 /* ---------------- Cost center ranking ---------------- */
+/* ---------------- Classement des centres de coûts ---------------- */
 
 @Composable
 private fun CostCenterRankingSection(departments: List<DepartmentBudget>, appMode: AppMode) {
@@ -447,6 +453,7 @@ private fun CostCenterRankingSection(departments: List<DepartmentBudget>, appMod
 }
 
 /* ---------------- Cost distribution (donut / pie chart) ---------------- */
+/* ---------------- Répartition des coûts (graphique en beignet / camembert) ---------------- */
 
 @Composable
 private fun CostDistributionSection(totalCostLabel: String, slices: List<CostDistributionSlice>, appMode: AppMode) {
@@ -534,6 +541,7 @@ private fun PieChart(slices: List<CostDistributionSlice>, modifier: Modifier = M
 }
 
 /* ---------------- Profitability trend (line chart) ---------------- */
+/* ---------------- Tendance de rentabilité (graphique linéaire) ---------------- */
 
 @Composable
 private fun ProfitabilityTrendSection(deltaLabel: String, trend: List<TrendPoint>, appMode: AppMode) {

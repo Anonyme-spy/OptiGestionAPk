@@ -35,6 +35,11 @@ import live.anonymespy.optigestion.ui.theme.ThemeMode
  * read/write AppRepository directly, so every screen updates immediately
  * (colours via CaeColors, text via strings.xml + AppCompatDelegate, amounts
  * via formatCurrency, runway via cashOnHand).
+ *
+ * Sélecteurs de thème + langue + devise + liquidités, plus export de données —
+ * lecture/écriture directe dans AppRepository, afin que chaque écran se mette à jour immédiatement
+ * (couleurs via CaeColors, texte via strings.xml + AppCompatDelegate, montants
+ * via formatCurrency, piste via cashOnHand).
  */
 @Composable
 fun SettingsScreen(onProfileClick: () -> Unit = {}) {
@@ -45,6 +50,15 @@ fun SettingsScreen(onProfileClick: () -> Unit = {}) {
     // instead of hoping the OS-version-dependent auto path fires.
     val activity = context as? Activity
 
+    // Recreating is the reliable fallback: AppCompatDelegate.setApplicationLocales()
+    // (called inside AppRepository.selectLanguage()) is supposed to recreate an
+    // AppCompatActivity automatically, but forcing it here removes any doubt
+    // instead of hoping the OS-version-dependent auto path fires.
+    //
+    // La recréation est la solution de repli fiable : AppCompatDelegate.setApplicationLocales()
+    // (appelé dans AppRepository.selectLanguage()) est censé recréer une
+    // AppCompatActivity automatiquement, mais le forcer ici lève tout doute
+    // au lieu d'espérer que le chemin automatique dépendant de la version de l'OS se déclenche.
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         try {

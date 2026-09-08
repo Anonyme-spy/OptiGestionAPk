@@ -10,6 +10,11 @@ import androidx.compose.ui.graphics.Color
  * Analysis, Stats). Each token is backed by `mutableStateOf`, so calling
  * [CaeColors.applyMode] updates every screen that reads a CaeColors.*
  * property live, with no extra plumbing required.
+ *
+ * Jetons de couleur partagés par chaque écran d'OptiGestion (Tableau de bord, Feuilles,
+ * Analyse, Statistiques). Chaque jeton est soutenu par `mutableStateOf`, donc l'appel à
+ * [applyMode] met à jour chaque écran qui lit une propriété CaeColors.*
+ * en direct, sans plomberie supplémentaire requise.
  */
 object CaeColors {
     var Primary by mutableStateOf(LightPalette.Primary)
@@ -47,10 +52,12 @@ object CaeColors {
 
     var SurfaceTint by mutableStateOf(LightPalette.SurfaceTint)
 
-    /** Elevated "card" surface used on the Stats screen. Literal white only in light mode. */
+    /** Elevated "card" surface used on the Stats screen. Literal white only in light mode.
+     * Surface de "carte" surélevée utilisée sur l'écran des Statistiques. Blanc littéral uniquement en mode clair. */
     var White by mutableStateOf(LightPalette.White)
 
     // Status pill colors used on the Sheets screen.
+    // Couleurs des pilules de statut utilisées sur l'écran des Feuilles.
     var ApprovedBg by mutableStateOf(LightPalette.ApprovedBg)
     var ApprovedText by mutableStateOf(LightPalette.ApprovedText)
     var PendingBg by mutableStateOf(LightPalette.PendingBg)
@@ -58,7 +65,8 @@ object CaeColors {
     var RejectedBg by mutableStateOf(LightPalette.RejectedBg)
     var RejectedText by mutableStateOf(LightPalette.RejectedText)
 
-    /** Swaps every token over to the palette matching [mode] (resolving SYSTEM against [systemInDarkTheme]). */
+    /** Swaps every token over to the palette matching [mode] (resolving SYSTEM against [systemInDarkTheme]).
+     * Bascule chaque jeton vers la palette correspondant au [mode] (résolution de SYSTEM par rapport à [systemInDarkTheme]). */
     fun applyMode(mode: ThemeMode, systemInDarkTheme: Boolean) {
         val palette: Palette = when (mode) {
             ThemeMode.SYSTEM -> if (systemInDarkTheme) DarkPalette else LightPalette
@@ -104,7 +112,8 @@ object CaeColors {
     }
 }
 
-/** How the person wants the app's colour scheme chosen. Persisted in AppRepository. */
+/** How the person wants the app's colour scheme chosen. Persisted in AppRepository.
+ * Comment la personne souhaite que le schéma de couleurs de l'application soit choisi. Persisté dans AppRepository. */
 enum class ThemeMode(val label: String) {
     SYSTEM("Système"),
     LIGHT("Clair"),
@@ -113,11 +122,16 @@ enum class ThemeMode(val label: String) {
 }
 
 /* ---------------- Palettes ---------------- */
+/* ---------------- Palettes ---------------- */
 
 /**
  * One full set of colour tokens. LightPalette/DarkPalette/AmoledPalette are
  * all instances of this same type, which is what lets `applyMode`'s `when`
  * expression read `.Primary`, `.Background`, etc. off whichever one it picks.
+ *
+ * Un ensemble complet de jetons de couleur. LightPalette/DarkPalette/AmoledPalette sont
+ * toutes des instances de ce même type, ce qui permet à l'expression `when` de `applyMode`
+ * de lire `.Primary`, `.Background`, etc. à partir de celle qu'elle choisit.
  */
 private data class Palette(
     val Primary: Color,
@@ -149,6 +163,7 @@ private data class Palette(
     val InverseOnSurface: Color,
     val SurfaceTint: Color,
     val White: Color, // elevated "card" surface — literal white only in the light palette
+                      // surface de "carte" surélevée — blanc littéral uniquement dans la palette claire
     val ApprovedBg: Color,
     val ApprovedText: Color,
     val PendingBg: Color,
@@ -195,7 +210,8 @@ private val LightPalette = Palette(
     RejectedText = Color(0xFF93000A)
 )
 
-/** Regular dark theme — dark grey surfaces, not pure black. */
+/** Regular dark theme — dark grey surfaces, not pure black.
+ * Thème sombre normal — surfaces gris foncé, pas de noir pur. */
 private val DarkPalette = Palette(
     Primary = Color(0xFFAFC6FF),
     OnPrimary = Color(0xFF0A2350),
@@ -234,7 +250,8 @@ private val DarkPalette = Palette(
     RejectedText = Color(0xFFFFB4AB)
 )
 
-/** AMOLED theme — same accents as Dark but true black surfaces to save battery on OLED screens. */
+/** AMOLED theme — same accents as Dark but true black surfaces to save battery on OLED screens.
+ * Thème AMOLED — mêmes accents que Sombre mais surfaces noir pur pour économiser la batterie sur les écrans OLED. */
 private val AmoledPalette = Palette(
     Primary = DarkPalette.Primary,
     OnPrimary = DarkPalette.OnPrimary,

@@ -25,6 +25,10 @@ import live.anonymespy.optigestion.ui.theme.CaeColors
  * "-1.8%" style badge. Used by Dashboard's KPI-adjacent sections and by
  * Reports' profitability trend header.
  *
+ * Petite pilule montrant un delta de tendance avec une flèche haut/bas — un badge de style "+5,2 %" ou
+ * "-1,8 %". Utilisé par les sections adjacentes aux KPI du Tableau de bord et par
+ * l'en-tête de tendance de rentabilité des Rapports.
+ *
  * Deliberately its own file, owned by neither screen: it used to live
  * inside DashboardScreen.kt and broke StatsScreen.kt's build the moment
  * Dashboard got redesigned and no longer needed it locally. A shared
